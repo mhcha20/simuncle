@@ -20,9 +20,12 @@ export const ENV = {
   adminEmails: list(process.env.ADMIN_EMAILS),
   /** Where owner notifications go. Falls back to the first admin email. */
   ownerEmail: (process.env.OWNER_EMAIL ?? list(process.env.ADMIN_EMAILS)[0] ?? "").trim(),
-  forgeApiUrl: process.env.BUILT_IN_FORGE_API_URL ?? "",
-  forgeApiKey: process.env.BUILT_IN_FORGE_API_KEY ?? "",
   indexNowKey: process.env.INDEXNOW_KEY ?? "",
+
+  // LLM (Anthropic)
+  llmApiKey: process.env.LLM_API_KEY ?? process.env.ANTHROPIC_API_KEY ?? "",
+  llmModel: process.env.LLM_MODEL || undefined,
+  llmApiUrl: process.env.LLM_API_URL ?? "",
 
   // File storage (any S3-compatible service: Cloudflare R2, AWS S3, ...)
   s3Endpoint: process.env.S3_ENDPOINT ?? "",
