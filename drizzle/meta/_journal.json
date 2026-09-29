@@ -176,6 +176,13 @@
       "when": 1783622521386,
       "tag": "0024_greedy_psynapse",
       "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "5",
+      "when": 1790697837299,
+      "tag": "0025_lean_barracuda",
+      "breakpoints": true
     }
   ]
 }

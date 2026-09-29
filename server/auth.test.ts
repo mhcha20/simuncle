@@ -30,3 +30,16 @@ describe("session cookie", () => {
     expect(await sdk.verifySession(undefined)).toBeNull();
   });
 });
+
+describe("cron authentication", () => {
+  it("accepts the shared secret and rejects anything else", async () => {
+    const { setInternalCronSecret } = await import("./_core/sdk");
+    setInternalCronSecret("s3cret-value");
+    const mk = (authorization?: string) => ({ headers: authorization ? { authorization } : {} }) as never;
+    const user = await sdk.authenticateRequest(mk("Bearer s3cret-value"));
+    expect(user.isCron).toBe(true);
+    await expect(sdk.authenticateRequest(mk("Bearer nope"))).rejects.toThrow();
+    await expect(sdk.authenticateRequest(mk())).rejects.toThrow();
+    setInternalCronSecret("");
+  });
+});

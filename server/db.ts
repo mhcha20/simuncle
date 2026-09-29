@@ -1319,6 +1319,7 @@ export async function getRecentEmailLogs(limit = 100) {
 export async function insertSyncHistory(data: {
   triggeredBy: "manual" | "scheduled";
   status: "success" | "failed";
+  supplier?: "vizlync" | "tgt";
   totalProducts: number;
   added: number;
   removed: number;
@@ -1330,6 +1331,7 @@ export async function insertSyncHistory(data: {
   if (!db) return;
   await db.insert(syncHistory).values({
     triggeredBy: data.triggeredBy,
+    supplier: data.supplier ?? "vizlync",
     status: data.status,
     totalProducts: data.totalProducts,
     added: data.added,
@@ -1340,12 +1342,13 @@ export async function insertSyncHistory(data: {
   });
 }
 
-export async function getRecentSyncHistory(limit = 5) {
+export async function getRecentSyncHistory(limit = 5, supplier?: "vizlync" | "tgt") {
   const db = await getDb();
   if (!db) return [];
   return db
     .select()
     .from(syncHistory)
+    .where(supplier ? eq(syncHistory.supplier, supplier) : undefined)
     .orderBy(desc(syncHistory.createdAt))
     .limit(limit);
 }

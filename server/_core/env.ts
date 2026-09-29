@@ -9,6 +9,10 @@ export const ENV = {
   /** Public site origin, e.g. https://simuncle.com (used for OAuth redirect + email links). */
   publicUrl: process.env.PUBLIC_URL ?? "",
 
+  /** Shared secret for triggering /api/scheduled/* over HTTP (also used by the built-in scheduler). */
+  cronSecret: process.env.CRON_SECRET ?? "",
+  disableScheduler: process.env.DISABLE_SCHEDULER === "1",
+
   // Login
   googleClientId: process.env.GOOGLE_CLIENT_ID ?? "",
   googleClientSecret: process.env.GOOGLE_CLIENT_SECRET ?? "",

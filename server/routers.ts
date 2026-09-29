@@ -349,6 +349,7 @@ const productsRouter = router({
       }
       await insertSyncHistory({
         triggeredBy: "manual",
+        supplier: "tgt",
         status: errors.length === 0 ? "success" : "failed",
         totalProducts: products.length,
         added: 0,
@@ -362,6 +363,7 @@ const productsRouter = router({
       const errorMsg = err instanceof Error ? err.message : String(err);
       await insertSyncHistory({
         triggeredBy: "manual",
+        supplier: "tgt",
         status: "failed",
         totalProducts: 0,
         added: 0,

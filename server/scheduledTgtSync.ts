@@ -111,6 +111,7 @@ async function runTgtSync() {
     // Record sync history
     await insertSyncHistory({
       triggeredBy: "scheduled",
+      supplier: "tgt",
       status: errors.length === 0 ? "success" : "failed",
       totalProducts: products.length,
       added: 0,
@@ -153,6 +154,7 @@ async function runTgtSync() {
 
     await insertSyncHistory({
       triggeredBy: "scheduled",
+      supplier: "tgt",
       status: "failed",
       totalProducts: 0,
       added: 0,

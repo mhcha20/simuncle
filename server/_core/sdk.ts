@@ -1,5 +1,6 @@
 import { COOKIE_NAME, ONE_YEAR_MS } from "@shared/const";
 import { ForbiddenError } from "@shared/_core/errors";
+import { timingSafeEqual } from "node:crypto";
 import { parse as parseCookieHeader } from "cookie";
 import type { Request } from "express";
 import { SignJWT, jwtVerify } from "jose";
@@ -20,6 +21,40 @@ export type SessionPayload = {
 export type AuthenticatedUser = User & {
   taskUid?: string;
   isCron?: boolean;
+};
+
+/** Secret the built-in scheduler and external cron services present as `Authorization: Bearer <secret>`. */
+let internalCronSecret = ENV.cronSecret;
+
+/** Set by the scheduler when CRON_SECRET is unset, so it can still call its own endpoints. */
+export function setInternalCronSecret(secret: string) {
+  internalCronSecret = secret;
+}
+
+function isCronRequest(req: Request): boolean {
+  if (!internalCronSecret) return false;
+  const header = req.headers.authorization ?? "";
+  if (!header.startsWith("Bearer ")) return false;
+  const given = Buffer.from(header.slice(7));
+  const expected = Buffer.from(internalCronSecret);
+  return given.length === expected.length && timingSafeEqual(given, expected);
+}
+
+const cronUser = (): AuthenticatedUser => {
+  const now = new Date();
+  return {
+    id: -1,
+    openId: "cron",
+    name: "Scheduled task",
+    email: null,
+    loginMethod: null,
+    role: "user",
+    createdAt: now,
+    updatedAt: now,
+    lastSignedIn: now,
+    taskUid: "cron",
+    isCron: true,
+  };
 };
 
 /** Session cookie handling (signed HS256 JWT). Login itself lives in ./auth.ts. */
@@ -53,6 +88,9 @@ class SessionService {
   }
 
   async authenticateRequest(req: Request): Promise<AuthenticatedUser> {
+    // Scheduled jobs authenticate with the shared cron secret instead of a session.
+    if (isCronRequest(req)) return cronUser();
+
     const cookies = parseCookieHeader(req.headers.cookie ?? "");
     const session = await this.verifySession(cookies[COOKIE_NAME]);
     if (!session) throw ForbiddenError("Invalid session cookie");

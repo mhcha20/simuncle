@@ -244,6 +244,7 @@ export type InsertEmailLog = typeof emailLogs.$inferInsert;
 export const syncHistory = mysqlTable("sync_history", {
   id: int("id").autoincrement().primaryKey(),
   triggeredBy: mysqlEnum("triggeredBy", ["manual", "scheduled"]).default("manual").notNull(),
+  supplier: varchar("supplier", { length: 16 }).default("vizlync").notNull(),
   status: mysqlEnum("sync_status", ["success", "failed"]).default("success").notNull(),
   totalProducts: int("totalProducts").default(0).notNull(),
   added: int("added").default(0).notNull(),
