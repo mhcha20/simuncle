@@ -1,0 +1,13 @@
+{
+  "$schema": "https://railway.com/railway.schema.json",
+  "build": {
+    "buildCommand": "pnpm install --frozen-lockfile && pnpm build"
+  },
+  "deploy": {
+    "startCommand": "pnpm start",
+    "healthcheckPath": "/sitemap.xml",
+    "restartPolicyType": "ON_FAILURE",
+    "numReplicas": 1,
+    "preDeployCommand": ["node dist/db-setup.js"]
+  }
+}

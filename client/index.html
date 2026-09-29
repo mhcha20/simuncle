@@ -167,10 +167,18 @@
         });
       }
     </script>
-    <script
-      defer
-      src="%VITE_ANALYTICS_ENDPOINT%/umami"
-      data-website-id="%VITE_ANALYTICS_WEBSITE_ID%"></script>
+    <!-- Umami analytics: only loaded when VITE_UMAMI_SCRIPT_URL and VITE_UMAMI_WEBSITE_ID were set at build time -->
+    <script>
+      (function () {
+        var url = "%VITE_UMAMI_SCRIPT_URL%", id = "%VITE_UMAMI_WEBSITE_ID%";
+        if (url.indexOf("%") !== -1 || id.indexOf("%") !== -1) return;
+        var s = document.createElement("script");
+        s.defer = true;
+        s.src = url;
+        s.setAttribute("data-website-id", id);
+        document.head.appendChild(s);
+      })();
+    </script>
     <!-- Google Tag Manager (deferred to avoid blocking FCP) -->
     <script defer>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
     new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],

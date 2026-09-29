@@ -16,10 +16,16 @@ import { sendViaResend } from "./email";
  */
 
 const REPORT_EMAIL = "manhey@gmail.com";
-const UMAMI_ENDPOINT = process.env.VITE_ANALYTICS_ENDPOINT || "https://manus-analytics.com";
-const UMAMI_WEBSITE_ID = process.env.VITE_ANALYTICS_WEBSITE_ID || "";
+// Umami API base, e.g. https://api.umami.is/v1 (Umami Cloud) or https://umami.example.com/api (self-hosted).
+// Without UMAMI_API_URL / UMAMI_WEBSITE_ID the report simply leaves out the traffic section.
+const UMAMI_API_URL = (process.env.UMAMI_API_URL || "").replace(/\/+$/, "");
+const UMAMI_WEBSITE_ID = process.env.UMAMI_WEBSITE_ID || "";
+const UMAMI_API_KEY = process.env.UMAMI_API_KEY || "";
+const umamiHeaders = (): Record<string, string> => (UMAMI_API_KEY ? { "x-umami-api-key": UMAMI_API_KEY } : {});
 
-// ─── Umami API helpers (only works from production IP) ───────────────────────
+// ─── Umami API helpers ───────────────────────────────────────────────────────
+
+const umamiConfigured = () => Boolean(UMAMI_API_URL && UMAMI_WEBSITE_ID);
 
 interface UmamiStats {
   pageviews: { value: number; prev: number };
@@ -35,9 +41,10 @@ interface UmamiMetric {
 }
 
 async function fetchUmamiStats(startAt: number, endAt: number): Promise<UmamiStats | null> {
+  if (!umamiConfigured()) return null;
   try {
-    const url = `${UMAMI_ENDPOINT}/api/websites/${UMAMI_WEBSITE_ID}/stats?startAt=${startAt}&endAt=${endAt}`;
-    const r = await fetch(url);
+    const url = `${UMAMI_API_URL}/websites/${UMAMI_WEBSITE_ID}/stats?startAt=${startAt}&endAt=${endAt}`;
+    const r = await fetch(url, { headers: umamiHeaders() });
     if (!r.ok) {
       console.log(`[MonthlyReport] Umami stats failed: ${r.status}`);
       return null;
@@ -50,9 +57,10 @@ async function fetchUmamiStats(startAt: number, endAt: number): Promise<UmamiSta
 }
 
 async function fetchUmamiMetrics(startAt: number, endAt: number, type: string, limit = 10): Promise<UmamiMetric[]> {
+  if (!umamiConfigured()) return [];
   try {
-    const url = `${UMAMI_ENDPOINT}/api/websites/${UMAMI_WEBSITE_ID}/metrics?startAt=${startAt}&endAt=${endAt}&type=${type}&limit=${limit}`;
-    const r = await fetch(url);
+    const url = `${UMAMI_API_URL}/websites/${UMAMI_WEBSITE_ID}/metrics?startAt=${startAt}&endAt=${endAt}&type=${type}&limit=${limit}`;
+    const r = await fetch(url, { headers: umamiHeaders() });
     if (!r.ok) {
       console.log(`[MonthlyReport] Umami metrics (${type}) failed: ${r.status}`);
       return [];
