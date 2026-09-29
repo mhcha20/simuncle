@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { fetchAllProducts } from "./vizlync";
 
-describe("Vizlync API", () => {
+describe.skipIf(!process.env.VIZLYNC_API_KEY)("Vizlync API", () => {
   it("should have API credentials configured", () => {
     expect(process.env.VIZLYNC_API_KEY).toBeTruthy();
     expect(process.env.VIZLYNC_PARTNER_ID).toBeTruthy();

@@ -588,7 +588,7 @@ const translations: Record<Language, Translations> = {
     auth: {
       loginTitle: "登入 SIM uncle",
       loginDesc: "登入後即可購買及管理您的 eSIM 方案",
-      loginBtn: "使用 Manus 帳號登入",
+      loginBtn: "使用 Google 或電郵登入",
       logoutSuccess: "已成功登出",
       welcome: "歡迎回來",
     },
@@ -888,7 +888,7 @@ const translations: Record<Language, Translations> = {
     auth: {
       loginTitle: "登录 SIM uncle",
       loginDesc: "登录后即可购买及管理您的 eSIM 方案",
-      loginBtn: "使用 Manus 账号登录",
+      loginBtn: "使用 Google 或邮箱登录",
       logoutSuccess: "已成功退出",
       welcome: "欢迎回来",
     },
@@ -1188,7 +1188,7 @@ const translations: Record<Language, Translations> = {
     auth: {
       loginTitle: "Sign in to SIM uncle",
       loginDesc: "Login to purchase and manage your eSIM plans",
-      loginBtn: "Login with Manus",
+      loginBtn: "Sign in with Google or email",
       logoutSuccess: "Successfully logged out",
       welcome: "Welcome back",
     },
@@ -1489,7 +1489,7 @@ const translations: Record<Language, Translations> = {
     auth: {
       loginTitle: "SIM uncleにサインイン",
       loginDesc: "ログインしてeSIMプランを購入・管理しましょう",
-      loginBtn: "Manusアカウントでログイン",
+      loginBtn: "Google またはメールでログイン",
       logoutSuccess: "ログアウトしました",
       welcome: "おかえりなさい",
     },
@@ -1790,7 +1790,7 @@ const translations: Record<Language, Translations> = {
     auth: {
       loginTitle: "SIM uncle에 로그인",
       loginDesc: "로그인하여 eSIM 요금제를 구매하고 관리하세요",
-      loginBtn: "Manus 계정으로 로그인",
+      loginBtn: "Google 또는 이메일로 로그인",
       logoutSuccess: "로그아웃되었습니다",
       welcome: "다시 오셨군요",
     },
@@ -2091,7 +2091,7 @@ const translations: Record<Language, Translations> = {
     auth: {
       loginTitle: "เข้าสู่ระบบ SIM uncle",
       loginDesc: "เข้าสู่ระบบเพื่อซื้อและจัดการแพ็กเกจ eSIM",
-      loginBtn: "เข้าสู่ระบบด้วย Manus",
+      loginBtn: "เข้าสู่ระบบด้วย Google หรืออีเมล",
       logoutSuccess: "ออกจากระบบสำเร็จ",
       welcome: "ยินดีต้อนรับกลับ",
     },

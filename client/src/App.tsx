@@ -30,6 +30,8 @@ const AdminArticles = lazy(() => import("./pages/AdminArticles"));
 const ArticleDetail = lazy(() => import("./pages/ArticleDetail"));
 const AdminSEO = lazy(() => import("./pages/AdminSEO"));
 const NotFound = lazy(() => import("./pages/NotFound"));
+const Login = lazy(() => import("./pages/Login"));
+const LoginVerify = lazy(() => import("./pages/Login").then(m => ({ default: m.LoginVerify })));
 const DestinationPage = lazy(() => import("./pages/DestinationPage"));
 const Referral = lazy(() => import("./pages/Referral"));
 const AdminReferral = lazy(() => import("./pages/AdminReferral"));
@@ -73,6 +75,8 @@ function Router() {
         <Route path="/esim/:destination" component={DestinationPage} />
         <Route path="/referral" component={Referral} />
         <Route path="/admin/referral" component={AdminReferral} />
+        <Route path="/login" component={Login} />
+        <Route path="/login/verify" component={LoginVerify} />
         <Route path="/404" component={NotFound} />
         <Route component={NotFound} />
       </Switch>

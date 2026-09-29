@@ -1,4 +1,4 @@
-import { and, desc, eq, like, or, sql } from "drizzle-orm";
+import { and, asc, desc, eq, like, or, sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
 import { announcements, cartItems, emailLogs, InsertUser, notifications, orders, productsCache, pushSubscriptions, searchAnalytics, siteSettings, syncHistory, users } from "../drizzle/schema";
 import { ENV } from "./_core/env";
@@ -41,7 +41,7 @@ export async function upsertUser(user: InsertUser): Promise<void> {
     if (user.role !== undefined) {
       values.role = user.role;
       updateSet.role = user.role;
-    } else if (user.openId === ENV.ownerOpenId) {
+    } else if (user.email && ENV.adminEmails.includes(user.email.trim().toLowerCase())) {
       values.role = "admin";
       updateSet.role = "admin";
     }
@@ -52,6 +52,60 @@ export async function upsertUser(user: InsertUser): Promise<void> {
     console.error("[Database] Failed to upsert user:", error);
     throw error;
   }
+}
+
+/**
+ * Find the user for a verified email or create one. Accounts created under the
+ * old Manus login are matched by email, so they keep their orders, cart,
+ * referral code and admin role. New users get an openId of "google_<sub>" or
+ * "email_<sha256>".
+ */
+export async function findOrCreateUserByEmail(input: {
+  email: string;
+  name: string | null;
+  loginMethod: "google" | "email";
+  providerId: string;
+}) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  const email = input.email.trim().toLowerCase();
+  const isAdminEmail = ENV.adminEmails.includes(email);
+  const now = new Date();
+
+  const existing = await db
+    .select()
+    .from(users)
+    .where(sql`LOWER(${users.email}) = ${email}`)
+    .orderBy(asc(users.id))
+    .limit(1);
+
+  if (existing[0]) {
+    const user = existing[0];
+    await db
+      .update(users)
+      .set({
+        loginMethod: input.loginMethod,
+        lastSignedIn: now,
+        ...(user.name ? {} : input.name ? { name: input.name } : {}),
+        ...(isAdminEmail ? { role: "admin" as const } : {}),
+      })
+      .where(eq(users.id, user.id));
+    return (await getUserByOpenId(user.openId))!;
+  }
+
+  const openId = `${input.loginMethod}_${input.providerId}`.slice(0, 64);
+  await upsertUser({
+    openId,
+    email,
+    name: input.name,
+    loginMethod: input.loginMethod,
+    lastSignedIn: now,
+    ...(isAdminEmail ? { role: "admin" as const } : {}),
+  });
+  const created = await getUserByOpenId(openId);
+  if (!created) throw new Error("Failed to create user");
+  return created;
 }
 
 export async function getUserByOpenId(openId: string) {

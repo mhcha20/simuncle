@@ -194,8 +194,7 @@ async function fetchSoroKeywords(): Promise<string[]> {
 export async function scheduledSeoOpportunityHandler(req: Request, res: Response) {
   try {
     const user = await sdk.authenticateRequest(req);
-    const ownerOpenId = process.env.OWNER_OPEN_ID ?? "";
-    const isOwner = user.openId === ownerOpenId;
+    const isOwner = user.role === "admin";
     if (!user.isCron && !isOwner) {
       return res.status(403).json({ error: "cron-or-owner-only" });
     }

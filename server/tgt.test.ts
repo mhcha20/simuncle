@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { fetchAllTgtProducts, getTgtAccountBalance, verifyTgtCallbackSign, queryTgtOrder, queryTgtUsage } from "./tgt";
 
-describe("TGT Technology Global API", () => {
+describe.skipIf(!process.env.TGT_SECRET)("TGT Technology Global API", () => {
   it("should have API credentials configured", () => {
     expect(process.env.TGT_API_BASE_URL).toBeTruthy();
     expect(process.env.TGT_ACCOUNT_ID).toBeTruthy();

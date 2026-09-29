@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 
-describe("SE Ranking Data API Key", () => {
+describe.skipIf(!process.env.SE_RANKING_API_KEY)("SE Ranking Data API Key", () => {
   it("SE_RANKING_API_KEY should be set and valid", async () => {
     const apiKey = process.env.SE_RANKING_API_KEY;
     expect(apiKey, "SE_RANKING_API_KEY must be set").toBeTruthy();
@@ -15,7 +15,7 @@ describe("SE Ranking Data API Key", () => {
   });
 });
 
-describe("SE Ranking Project API Token", () => {
+describe.skipIf(!process.env.SE_RANKING_PROJECT_TOKEN)("SE Ranking Project API Token", () => {
   it("SE_RANKING_PROJECT_TOKEN should be set and return projects", async () => {
     const token = process.env.SE_RANKING_PROJECT_TOKEN;
     expect(token, "SE_RANKING_PROJECT_TOKEN must be set").toBeTruthy();

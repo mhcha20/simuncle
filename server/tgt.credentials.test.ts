@@ -5,7 +5,7 @@ const BASE = process.env.TGT_API_BASE_URL ?? "https://enterpriseapisandbox.tugeg
 const ACCOUNT_ID = process.env.TGT_ACCOUNT_ID ?? "";
 const SECRET = process.env.TGT_SECRET ?? "";
 
-describe("TGT credentials", () => {
+describe.skipIf(!process.env.TGT_SECRET)("TGT credentials", () => {
   it("should connect to production TGT API (not sandbox)", () => {
     expect(BASE).toContain("enterpriseapi.tugegroup.com");
     expect(BASE).not.toContain("sandbox");

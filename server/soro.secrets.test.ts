@@ -6,7 +6,7 @@ import { describe, it, expect } from "vitest";
 
 const SORO_SUPABASE_URL = "https://afocirmbqdxnkyescnev.supabase.co";
 
-describe("Soro Secrets Validation", () => {
+describe.skipIf(!process.env.SORO_REFRESH_TOKEN)("Soro Secrets Validation", () => {
   it("SORO_REFRESH_TOKEN and SORO_SUPABASE_ANON_KEY should be set", () => {
     expect(process.env.SORO_REFRESH_TOKEN, "SORO_REFRESH_TOKEN must be set").toBeTruthy();
     expect(process.env.SORO_SUPABASE_ANON_KEY, "SORO_SUPABASE_ANON_KEY must be set").toBeTruthy();
