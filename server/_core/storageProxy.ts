@@ -1,94 +1,65 @@
 import type { Express } from "express";
 import { ENV } from "./env";
+import { isS3Configured, normalizeKey, storageRead } from "../storage";
 
-// In-memory cache for signed URLs to avoid hammering the Forge API
-// Key: storage key, Value: { signedUrl, expiresAt }
-const signedUrlCache = new Map<string, { url: string; expiresAt: number }>();
-const SIGNED_URL_TTL_MS = 50 * 60 * 1000; // 50 minutes (signed URLs typically valid for 1 hour)
+const CACHE_CONTROL = "public, max-age=86400";
 
-// Browser cache duration for image responses (1 day)
-// We use a shorter duration than the signed URL TTL so the browser re-fetches
-// before the signed URL expires, at which point we issue a fresh signed URL.
-const BROWSER_CACHE_MAX_AGE = 86400; // 1 day in seconds
+const CONTENT_TYPES: Record<string, string> = {
+  jpg: "image/jpeg",
+  jpeg: "image/jpeg",
+  png: "image/png",
+  webp: "image/webp",
+  gif: "image/gif",
+  avif: "image/avif",
+  svg: "image/svg+xml",
+  ico: "image/x-icon",
+  pdf: "application/pdf",
+  json: "application/json",
+};
 
+function contentTypeFor(key: string): string {
+  return CONTENT_TYPES[key.split(".").pop()?.toLowerCase() ?? ""] ?? "application/octet-stream";
+}
+
+function publicUrl(key: string) {
+  return `${ENV.s3PublicUrl}/${key.split("/").map(encodeURIComponent).join("/")}`;
+}
+
+/**
+ * Serves /manus-storage/{key} (the URL format already stored in the database).
+ * - S3/R2 with S3_PUBLIC_URL: redirect to the public bucket URL.
+ * - Otherwise the bytes are served from here with a cacheable response
+ *   (a presigned-URL redirect changes on every visit, so browsers could not cache it).
+ */
 export function registerStorageProxy(app: Express) {
   app.get("/manus-storage/*", async (req, res) => {
-    const key = (req.params as Record<string, string>)[0];
-    if (!key) {
-      res.status(400).send("Missing storage key");
-      return;
-    }
-
-    if (!ENV.forgeApiUrl || !ENV.forgeApiKey) {
-      res.status(500).send("Storage proxy not configured");
+    let key: string;
+    try {
+      key = normalizeKey((req.params as Record<string, string>)[0] ?? "");
+    } catch {
+      res.status(400).send("Invalid storage key");
       return;
     }
 
     try {
-      // Check in-memory signed URL cache first
-      let signedUrl: string | null = null;
-      const cached = signedUrlCache.get(key);
-      if (cached && cached.expiresAt > Date.now()) {
-        signedUrl = cached.url;
-      } else {
-        // Fetch a fresh signed URL from the Forge API
-        const forgeUrl = new URL(
-          "v1/storage/presign/get",
-          ENV.forgeApiUrl.replace(/\/+$/, "") + "/",
-        );
-        forgeUrl.searchParams.set("path", key);
-
-        const forgeResp = await fetch(forgeUrl, {
-          headers: { Authorization: `Bearer ${ENV.forgeApiKey}` },
-        });
-
-        if (!forgeResp.ok) {
-          const body = await forgeResp.text().catch(() => "");
-          console.error(`[StorageProxy] forge error: ${forgeResp.status} ${body}`);
-          res.status(502).send("Storage backend error");
-          return;
-        }
-
-        const { url } = (await forgeResp.json()) as { url: string };
-        if (!url) {
-          res.status(502).send("Empty signed URL from backend");
-          return;
-        }
-
-        // Cache the signed URL for 50 minutes
-        signedUrlCache.set(key, { url, expiresAt: Date.now() + SIGNED_URL_TTL_MS });
-        signedUrl = url;
-      }
-
-      // Fetch the actual image content server-side and pipe it to the browser
-      // This allows us to set proper Cache-Control headers that the browser will respect
-      const imageResp = await fetch(signedUrl);
-
-      if (!imageResp.ok) {
-        // Signed URL may have expired; clear cache and return error
-        signedUrlCache.delete(key);
-        console.error(`[StorageProxy] image fetch error: ${imageResp.status} for key: ${key}`);
-        res.status(502).send("Failed to fetch image from storage");
+      if (isS3Configured() && ENV.s3PublicUrl) {
+        res.set("Cache-Control", CACHE_CONTROL);
+        res.redirect(301, publicUrl(key));
         return;
       }
 
-      // Forward content-type from the upstream response
-      const contentType = imageResp.headers.get("content-type") || "application/octet-stream";
-      const contentLength = imageResp.headers.get("content-length");
-
-      res.set("Content-Type", contentType);
-      res.set("Cache-Control", `public, max-age=${BROWSER_CACHE_MAX_AGE}, stale-while-revalidate=3600`);
-      res.set("Vary", "Accept-Encoding");
-      if (contentLength) {
-        res.set("Content-Length", contentLength);
+      let bytes: Buffer;
+      try {
+        bytes = await storageRead(key);
+      } catch {
+        res.status(404).send("Not found");
+        return;
       }
-
-      // Pipe the image bytes directly to the response
-      const buffer = await imageResp.arrayBuffer();
-      res.status(200).send(Buffer.from(buffer));
+      res.set({ "Content-Type": contentTypeFor(key), "Cache-Control": CACHE_CONTROL });
+      res.send(bytes);
     } catch (err) {
       console.error("[StorageProxy] failed:", err);
-      res.status(502).send("Storage proxy error");
+      res.status(502).send("Storage error");
     }
   });
 }
