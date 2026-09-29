@@ -1,0 +1,190 @@
+<!doctype html>
+<html lang="zh-TW" style="background:#faf8f5">
+
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
+    <title>SIM uncle - 全球 eSIM 即買即用 | 200+ 國家</title>
+    <meta name="description" content="購買全球 eSIM 數據方案，覆蓋 200+ 個國家及地區。無需換 SIM 卡，掃碼即用，支援 4G/5G 網絡，港幣結算，即時收到 QR Code。" />
+    <meta name="keywords" content="eSIM, 旅遊eSIM, 全球eSIM, travel eSIM, eSIM Hong Kong, SIM uncle" />
+    <meta name="robots" content="index, follow" />
+    <meta name="author" content="SIM uncle" />
+    <meta property="og:title" content="SIM uncle - 全球 eSIM 即買即用 | 覆蓋 200+ 國家地區" />
+    <meta property="og:description" content="購買全球 eSIM 數據方案，覆蓋 200+ 個國家及地區。無需換 SIM 卡，掃碼即用，支援 4G/5G 網絡，港幣結算，即時收到 QR Code。" />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://simuncle.com" />
+    <meta name="twitter:title" content="SIM uncle - 全球 eSIM 即買即用" />
+    <meta name="twitter:description" content="覆蓋 200+ 個國家及地區，無需換 SIM 卡，掃碼即用，港幣結算。" />
+    <link rel="canonical" href="https://simuncle.com" />
+    <link rel="icon" type="image/png" href="/favicon.png" />
+    <link rel="apple-touch-icon" href="/manus-storage/apple-touch-icon_9fa92212.png" />
+    <link rel="manifest" href="/manifest.json" />
+    <meta name="theme-color" content="#16a34a" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="SIM uncle" />
+    <meta property="og:image" content="https://simuncle.com/manus-storage/simuncle-banner_04b91e44.webp" />
+    <meta property="og:image:width" content="1424" />
+    <meta property="og:image:height" content="752" />
+    <meta property="og:image:alt" content="SIM uncle eSIM - 一鍵開啟，探索全球" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:image" content="https://simuncle.com/manus-storage/simuncle-banner_04b91e44.webp" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <!-- Preload splash logo (shown immediately on first visit, blocks FCP) -->
+    <link rel="preload" as="image" fetchpriority="high"
+          href="/manus-storage/simuncle-logo-new_0fbd503a.webp"
+          type="image/webp" />
+    <!-- Preload LCP hero banner image (above-the-fold, critical for FCP/LCP) -->
+    <!-- Served via /manus-storage/ proxy with Cache-Control: public, max-age=86400 -->
+    <link rel="preload" as="image" fetchpriority="high"
+          href="/manus-storage/hero-banner-bg_ada89b8e.webp"
+          type="image/webp" />
+    <!-- Non-blocking font load: preload + media=print trick avoids render-blocking -->
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+TC:wght@400;500;700&display=swap" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+TC:wght@400;500;700&display=swap"
+          rel="stylesheet" media="print" onload="this.media='all'" />
+    <noscript>
+      <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet" />
+    </noscript>
+
+    <style>
+      /* =====================================================
+         Splash Screen
+         米白背景 + 浮動 eSIM/旅遊 SVG 圖示 + Logo 去背 + 載入轉圈
+         ===================================================== */
+      #html-splash {
+        position: fixed;
+        inset: 0;
+        z-index: 99999;
+        background: #faf8f5;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+        transition: opacity 0.3s cubic-bezier(0.23,1,0.32,1);
+      }
+
+
+
+      /* 中心 Logo */
+      #sp-center {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 12px;
+        opacity: 0;
+        animation: centerIn 0.6s cubic-bezier(0.23,1,0.32,1) 0.2s forwards;
+        z-index: 2;
+      }
+      @keyframes centerIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to   { opacity: 1; transform: translateY(0); }
+      }
+
+      /* Logo：mix-blend-mode multiply 令白色背景融入米白底色 */
+      #sp-logo-img {
+        width: min(260px, 68vw);
+        height: auto;
+        mix-blend-mode: multiply;
+      }
+
+      /* 載入轉圈 */
+      #sp-spinner {
+        width: 22px;
+        height: 22px;
+        border: 2.5px solid rgba(0,0,0,0.1);
+        border-top-color: #555;
+        border-radius: 50%;
+        opacity: 0;
+        animation: spinnerIn 0.3s ease 0.5s forwards, spin 0.85s linear 0.5s infinite;
+      }
+      @keyframes spinnerIn { to { opacity: 1; } }
+      @keyframes spin { to { transform: rotate(360deg); } }
+    </style>
+  </head>
+
+  <body>
+    <div id="html-splash">
+      <!-- ===== 中心 Logo ===== -->
+      <div id="sp-center">
+        <picture>
+          <source srcset="/manus-storage/simuncle-logo-new_0fbd503a.webp" type="image/webp" />
+          <img id="sp-logo-img" src="/manus-storage/simuncle-logo-new_76bd1cb0.png" alt="SIM uncle eSIM" />
+        </picture>
+        <div id="sp-spinner"></div>
+      </div>
+    </div>
+
+    <script>
+      (function(){
+        var splash = document.getElementById('html-splash');
+        if (!splash) return;
+        var seen = sessionStorage.getItem('splash_shown');
+        if (seen) { splash.style.display = 'none'; return; }
+        sessionStorage.setItem('splash_shown', '1');
+
+        var hidden = false;
+        function hide() {
+          if (hidden) return;
+          hidden = true;
+          splash.style.opacity = '0';
+          setTimeout(function(){ splash.style.display = 'none'; }, 300);
+        }
+        setTimeout(hide, 300);
+        setTimeout(hide, 3000);
+        window.__hideSplash = hide;
+      })();
+    </script>
+
+    <!-- SEO: Per-page H1 dynamically injected by server based on route -->
+    <h1 style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap">Global eSIM, Ready Instantly</h1>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+    <script>
+      // v5: Unregister outdated SW before registering new one (fixes iOS Safari blank page)
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.getRegistration('/').then(function(reg) {
+          if (reg && reg.active) {
+            fetch('/sw.js', { cache: 'no-store' })
+              .then(function(r) { return r.text(); })
+              .then(function(text) {
+                if (text.indexOf('simuncle-v5') === -1) {
+                  console.log('[PWA] Outdated SW detected, unregistering for fresh start...');
+                  reg.unregister().then(function() { window.location.reload(); });
+                }
+              })
+              .catch(function() {});
+          }
+        }).catch(function() {});
+
+        window.addEventListener('load', function() {
+          navigator.serviceWorker.register('/sw.js')
+            .then(function(reg) { console.log('[PWA] Service Worker v5 registered:', reg.scope); })
+            .catch(function(err) { console.log('[PWA] Service Worker registration failed:', err); });
+        });
+      }
+    </script>
+    <script
+      defer
+      src="%VITE_ANALYTICS_ENDPOINT%/umami"
+      data-website-id="%VITE_ANALYTICS_WEBSITE_ID%"></script>
+    <!-- Google Tag Manager (deferred to avoid blocking FCP) -->
+    <script defer>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+    new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+    j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+    'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+    })(window,document,'script','dataLayer','GTM-N4C2SQF6');</script>
+    <!-- Google tag (gtag.js) -->
+    <script defer src="https://www.googletagmanager.com/gtag/js?id=AW-18236820850"></script>
+    <script defer>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'AW-18236820850');
+    </script>
+  </body>
+
+</html>

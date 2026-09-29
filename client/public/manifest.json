@@ -1,0 +1,72 @@
+{
+  "name": "SIM uncle",
+  "short_name": "SIM uncle",
+  "description": "SIM uncle - 全球 eSIM 即買即用，覆蓋 200+ 國家地區",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#16a34a",
+  "orientation": "portrait-primary",
+  "lang": "zh-TW",
+  "categories": ["travel", "utilities"],
+  "icons": [
+    {
+      "src": "/manus-storage/icon-72x72_3ab4ed22.png",
+      "sizes": "72x72",
+      "type": "image/png"
+    },
+    {
+      "src": "/manus-storage/icon-96x96_fdfdbede.png",
+      "sizes": "96x96",
+      "type": "image/png"
+    },
+    {
+      "src": "/manus-storage/icon-128x128_a260b401.png",
+      "sizes": "128x128",
+      "type": "image/png"
+    },
+    {
+      "src": "/manus-storage/icon-144x144_332baac4.png",
+      "sizes": "144x144",
+      "type": "image/png"
+    },
+    {
+      "src": "/manus-storage/icon-152x152_7882f45d.png",
+      "sizes": "152x152",
+      "type": "image/png"
+    },
+    {
+      "src": "/manus-storage/icon-192x192_4bcb6a0b.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/manus-storage/icon-384x384_bbf48d24.png",
+      "sizes": "384x384",
+      "type": "image/png"
+    },
+    {
+      "src": "/manus-storage/icon-512x512_3f1e7238.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "瀏覽 eSIM 方案",
+      "short_name": "方案",
+      "description": "瀏覽全球 eSIM 方案",
+      "url": "/products",
+      "icons": [{ "src": "/manus-storage/icon-96x96_fdfdbede.png", "sizes": "96x96" }]
+    },
+    {
+      "name": "查詢訂單",
+      "short_name": "訂單",
+      "description": "查詢 eSIM 訂單狀態",
+      "url": "/track-order",
+      "icons": [{ "src": "/manus-storage/icon-96x96_fdfdbede.png", "sizes": "96x96" }]
+    }
+  ]
+}

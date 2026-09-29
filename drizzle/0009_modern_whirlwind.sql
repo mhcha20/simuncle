@@ -1,0 +1,1 @@
+ALTER TABLE `orders` ADD `emailSent` boolean DEFAULT false NOT NULL;

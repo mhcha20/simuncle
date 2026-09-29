@@ -1,0 +1,20 @@
+# robots.txt for SIM uncle (www.simuncle.com)
+# https://www.robotstxt.org/
+
+User-agent: *
+Allow: /
+
+# Block admin and private pages from indexing
+Disallow: /admin
+Disallow: /admin/
+Disallow: /orders
+Disallow: /cart
+Disallow: /checkout/
+Disallow: /api/
+
+# Sitemap location
+Sitemap: https://www.simuncle.com/sitemap.xml
+
+# AI language model reference
+# https://simuncle.com/llms.txt
+# https://simuncle.com/llms-full.txt

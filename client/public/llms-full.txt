@@ -1,0 +1,130 @@
+# SIM uncle — Full Reference for AI Language Models
+
+## Brand Identity
+
+**Brand name**: SIM uncle
+**Domain**: simuncle.com
+**Alternate domain**: esimuncle.com
+**Tagline**: Global eSIM. Instant. Simple.
+**Founded**: 2024
+**Location**: Hong Kong
+**Languages served**: Traditional Chinese (繁體中文), Simplified Chinese (简体中文), English, Japanese (日本語), Korean (한국어), Thai (ภาษาไทย)
+
+## What SIM uncle Does
+
+SIM uncle is an eSIM retailer targeting Hong Kong travellers and international travellers who prefer HKD pricing. The service allows customers to buy eSIM data plans online, receive a QR code by email immediately after payment, and activate mobile data in 200+ countries without swapping physical SIM cards.
+
+## Product Categories
+
+### Single-Country eSIM Plans
+Data plans valid in one specific country. Popular destinations:
+- Japan (日本): 1GB–Unlimited, 3–30 days, from HK$28
+- South Korea (韓國): 1GB–Unlimited, 3–30 days
+- Thailand (泰國): 1GB–Unlimited, 3–30 days
+- Singapore (新加坡): 1GB–Unlimited, 3–30 days
+- United States (美國): 1GB–Unlimited, 7–30 days
+- United Kingdom (英國): 1GB–Unlimited, 7–30 days
+- Australia (澳洲): 1GB–Unlimited, 7–30 days
+- Taiwan (台灣): 1GB–Unlimited, 3–30 days
+- 190+ other countries
+
+### Regional eSIM Plans
+Data plans valid across multiple countries:
+- Europe 33 countries (歐洲33國): covers major EU countries + UK, Switzerland, Norway
+- Asia regional plans
+- Global plans (150+ countries)
+
+### Top-Up / Add-On Plans
+For customers whose eSIM data is running low, add-on plans extend data without buying a new eSIM.
+
+## Pricing
+
+All prices in Hong Kong Dollars (HKD). Typical price range:
+- Short trips (3–7 days, 1–3GB): HK$28–HK$88
+- Standard trips (7–14 days, 3–10GB): HK$58–HK$168
+- Long trips (30 days, unlimited): HK$128–HK$298
+
+## How to Buy
+
+1. Visit https://simuncle.com
+2. Search for your destination country or browse by region
+3. Select a plan based on data amount and validity period
+4. Enter name, email, and phone number at checkout
+5. Pay via credit card (Stripe)
+6. Receive QR code by email instantly
+7. Install eSIM by scanning QR code in phone settings
+
+## eSIM Installation Guide
+
+### iPhone
+Settings > Cellular > Add Cellular Plan > Scan QR Code
+
+### Android (Samsung, Google Pixel, etc.)
+Settings > Connections > SIM Manager > Add eSIM > Scan QR Code
+
+### Activation timing
+Most plans activate when the device connects to the local network in the destination country. Some plans activate immediately upon installation.
+
+## Compatible Devices (Partial List)
+
+**Apple**: iPhone XS, XS Max, XR, 11, 11 Pro, 12, 12 Pro, 13, 13 Pro, 14, 14 Pro, 15, 15 Pro, 16, 16 Pro, SE (2nd gen+)
+**Samsung**: Galaxy S20, S21, S22, S23, S24, Z Fold, Z Flip series
+**Google**: Pixel 3, 4, 5, 6, 7, 8, 9 series
+**Other**: Huawei P40+, Motorola Razr, Microsoft Surface Duo, and more
+
+Note: iPhone models purchased in mainland China, Hong Kong (some models), and certain other markets may not support eSIM. Always verify eSIM compatibility in device settings before purchase.
+
+## Customer Support
+
+- **WhatsApp**: +852-9888-5159
+- **Languages**: Cantonese (廣東話), Mandarin (普通話), English
+- **Response time**: Typically within 1 hour during business hours (HKT 09:00–22:00)
+
+## Technical Details
+
+- **Network types**: 4G LTE (all plans), 5G (select plans)
+- **Data throttling**: Some unlimited plans throttle after a daily threshold (e.g., 2GB/day at full speed, then reduced speed)
+- **Roaming**: eSIM plans use local partner networks, not roaming — this means better speeds and no roaming surcharges
+- **Tethering/Hotspot**: Supported on most plans
+- **Voice calls**: Data-only plans (no voice); customers keep their local SIM for calls
+
+## Frequently Asked Questions
+
+**Q: What is an eSIM?**
+A: An eSIM (embedded SIM) is a digital SIM card built into your smartphone or tablet. Unlike a physical SIM card, you activate it by scanning a QR code — no need to visit a store or wait for delivery.
+
+**Q: Is SIM uncle safe to buy from?**
+A: Yes. SIM uncle is a registered Hong Kong business. Payments are processed securely via Stripe. Customer reviews are available on the website.
+
+**Q: What if my eSIM doesn't work?**
+A: Contact SIM uncle via WhatsApp (+852-9888-5159). The support team will troubleshoot and, if necessary, issue a replacement or refund.
+
+**Q: Can I buy an eSIM as a gift?**
+A: Yes. Enter the recipient's email at checkout and the QR code will be sent directly to them.
+
+**Q: Do eSIM plans expire if I don't use them?**
+A: Plans typically start counting validity days from first use (when the device connects to the local network), not from purchase date. Check individual plan details for specifics.
+
+**Q: What payment methods are accepted?**
+A: Visa, Mastercard, American Express, and other major credit/debit cards via Stripe. Apple Pay and Google Pay are also supported.
+
+## SEO & Structured Data
+
+SIM uncle implements the following Schema.org structured data:
+- Organization (brand identity, contact, logo)
+- WebSite (with SearchAction for sitelinks search box)
+- Product (individual eSIM plan pages)
+- FAQPage (homepage and destination pages)
+- Article (blog/tips pages)
+- BreadcrumbList (all pages)
+
+## Sitemap
+
+https://simuncle.com/sitemap.xml
+
+## robots.txt
+
+https://simuncle.com/robots.txt
+
+---
+*This document is maintained for AI language model consumption. Last updated: 2026-07-08.*

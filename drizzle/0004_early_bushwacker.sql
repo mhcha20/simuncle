@@ -1,0 +1,1 @@
+ALTER TABLE `products_cache` ADD `isActive` boolean DEFAULT true NOT NULL;

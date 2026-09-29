@@ -1,0 +1,1 @@
+ALTER TABLE `orders` ADD `preferredLang` varchar(8) DEFAULT 'zh-TW' NOT NULL;

@@ -1,0 +1,1 @@
+ALTER TABLE `sync_history` ADD `failedCount` int DEFAULT 0 NOT NULL;
