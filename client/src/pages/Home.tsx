@@ -1131,6 +1131,9 @@ export default function Home() {
                 {language === "en" ? "Tips & Info" : language === "zh-CN" ? "实用资讯" : language === "ja" ? "お役立ち情報" : language === "ko" ? "유용한 정보" : language === "th" ? "ข้อมูลที่เป็นประโยชน์" : "實用資訊"}
               </Link>
               <Link href="/orders" className="hover:text-primary transition-colors">{t.nav.orders}</Link>
+              <Link href="/privacy" className="hover:text-primary transition-colors">
+                {language === "zh-TW" ? "私隱政策" : language === "zh-CN" ? "隐私政策" : "Privacy"}
+              </Link>
             </div>
           </div>
         </div>
