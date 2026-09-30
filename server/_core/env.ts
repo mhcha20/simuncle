@@ -12,6 +12,8 @@ export const ENV = {
   /** Shared secret for triggering /api/scheduled/* over HTTP (also used by the built-in scheduler). */
   cronSecret: process.env.CRON_SECRET ?? "",
   disableScheduler: process.env.DISABLE_SCHEDULER === "1",
+  /** Comma-separated job names to run (see server/scheduler.ts). Unset = all jobs. */
+  schedulerJobs: list(process.env.SCHEDULER_JOBS),
 
   // Login
   googleClientId: process.env.GOOGLE_CLIENT_ID ?? "",

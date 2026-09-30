@@ -3,7 +3,8 @@
 // so the handlers run exactly as they did when Manus called them.
 //
 // Runs in-process, so keep the app at ONE replica (otherwise every replica would
-// fire every job). Set DISABLE_SCHEDULER=1 to turn it off, e.g. when an external
+// fire every job). SCHEDULER_JOBS=name1,name2 runs only those jobs (unset = all).
+// DISABLE_SCHEDULER=1 turns it off, e.g. when an external
 // cron service calls the endpoints instead. Times are UTC. A run missed while the
 // server was down is not made up; the next scheduled run picks up.
 
@@ -69,6 +70,14 @@ export function cronMatches(expr: string, date: Date): boolean {
   );
 }
 
+/** Keep only the named jobs; an empty list means all. Throws on an unknown name so a typo can't silently disable a job. */
+export function selectJobs(jobs: ScheduledJob[], names: string[]): ScheduledJob[] {
+  if (names.length === 0) return jobs;
+  const unknown = names.filter(n => !jobs.some(j => j.name === n));
+  if (unknown.length > 0) throw new Error(`SCHEDULER_JOBS has unknown job(s): ${unknown.join(", ")}`);
+  return jobs.filter(j => names.includes(j.name));
+}
+
 async function fire(baseUrl: string, secret: string, job: ScheduledJob) {
   try {
     const res = await fetch(`${baseUrl}${job.path}`, {
@@ -90,6 +99,7 @@ export function startScheduler(port: number, jobs: ScheduledJob[] = JOBS): () =>
     return () => {};
   }
   jobs.forEach(j => cronMatches(j.cron, new Date())); // fail fast on a typo
+  jobs = selectJobs(jobs, ENV.schedulerJobs);
 
   // Without CRON_SECRET, use a random per-process secret: the scheduler still works,
   // and nobody outside can call the endpoints.

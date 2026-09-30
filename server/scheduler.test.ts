@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { cronMatches, JOBS } from "./scheduler";
+import { cronMatches, JOBS, selectJobs } from "./scheduler";
 
 const at = (iso: string) => new Date(iso);
 
@@ -34,5 +34,17 @@ describe("cronMatches (UTC)", () => {
       expect(() => cronMatches(job.cron, new Date())).not.toThrow();
       expect(job.path.startsWith("/api/scheduled/")).toBe(true);
     }
+  });
+});
+
+describe("selectJobs", () => {
+  it("returns everything when no names are given", () => {
+    expect(selectJobs(JOBS, [])).toEqual(JOBS);
+  });
+  it("keeps only the named jobs", () => {
+    expect(selectJobs(JOBS, ["reconcile-orders"]).map(j => j.name)).toEqual(["reconcile-orders"]);
+  });
+  it("rejects a misspelled name", () => {
+    expect(() => selectJobs(JOBS, ["reconcile-order"])).toThrow(/unknown/);
   });
 });

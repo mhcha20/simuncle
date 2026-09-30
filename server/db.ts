@@ -1227,7 +1227,7 @@ const REMINDER_SCHEDULE_HOURS = [6, 18, 36, 72];
 export async function getPendingOrdersForReminder() {
   const db = await getDb();
   if (!db) return [];
-  const { and: _and, eq: _eq, lt: _lt, or: _or, isNull: _isNull, lte: _lte } = await import("drizzle-orm");
+  const { and: _and, eq: _eq, lt: _lt, gt: _gt, or: _or, isNull: _isNull, lte: _lte } = await import("drizzle-orm");
   const now = Date.now();
 
   // Find all pending_payment orders that haven't exceeded max reminders
@@ -1239,6 +1239,9 @@ export async function getPendingOrdersForReminder() {
         _eq(orders.status, "pending_payment"),
         // Created more than 6h ago (minimum first reminder threshold)
         _lt(orders.createdAt, new Date(now - 6 * 60 * 60 * 1000)),
+        // Reminders are due at 6h/18h/36h/72h, so never chase orders older than 5 days
+        // (avoids emailing long-abandoned orders when the job is first switched on)
+        _gt(orders.createdAt, new Date(now - 5 * 24 * 60 * 60 * 1000)),
         // Haven't sent all 4 reminders yet
         _lte(orders.paymentReminderCount ?? 0, 3),
       ),
