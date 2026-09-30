@@ -27,6 +27,7 @@ import { handleScheduledTgtSync } from "../scheduledTgtSync";
 import { handleScheduledMonthlyReport } from "../scheduledMonthlyReport";
 import { handleScheduledTgtSyncMonitor } from "../scheduledTgtSyncMonitor";
 import { startScheduler } from "../scheduler";
+import { runDatabaseSetup } from "../db-setup";
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
@@ -47,7 +48,23 @@ async function findAvailablePort(startPort: number = 3000): Promise<number> {
   throw new Error(`No available port found starting from ${startPort}`);
 }
 
+/**
+ * Bring the database schema up to date before serving traffic. It is idempotent,
+ * and also runs as Railway's pre-deploy command; doing it here too means a
+ * deploy still self-heals if that command was skipped. A failure is logged
+ * loudly but does not stop the site, so checkout and browsing keep working.
+ */
+async function ensureDatabaseSchema() {
+  if (!process.env.DATABASE_URL || process.env.SKIP_DB_SETUP === "1") return;
+  try {
+    await runDatabaseSetup();
+  } catch (error) {
+    console.error("[db-setup] failed at startup:", error);
+  }
+}
+
 async function startServer() {
+  await ensureDatabaseSchema();
   const app = express();
   const server = createServer(app);
 
