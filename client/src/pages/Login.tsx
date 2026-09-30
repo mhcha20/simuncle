@@ -19,6 +19,7 @@ type Copy = {
   sentTitle: string;
   sentBody: (email: string) => string;
   useOther: string;
+  noMethods: string;
   confirmTitle: string;
   confirmBody: string;
   confirmBtn: string;
@@ -38,6 +39,7 @@ const COPY: Record<Language, Copy> = {
     sentTitle: "登入連結已發送",
     sentBody: e => `請到 ${e} 收件匣按連結登入。連結 15 分鐘內有效。`,
     useOther: "使用其他電郵",
+    noMethods: "登入功能暫時未能使用，請稍後再試或聯絡客服。",
     confirmTitle: "確認登入",
     confirmBody: "按下面的按鈕完成登入 SIM uncle。",
     confirmBtn: "登入",
@@ -69,6 +71,7 @@ const COPY: Record<Language, Copy> = {
     sentTitle: "登录链接已发送",
     sentBody: e => `请到 ${e} 收件箱点击链接登录。链接 15 分钟内有效。`,
     useOther: "使用其他邮箱",
+    noMethods: "登录功能暂时无法使用，请稍后再试或联系客服。",
     confirmTitle: "确认登录",
     confirmBody: "点击下面的按钮完成登录 SIM uncle。",
     confirmBtn: "登录",
@@ -100,6 +103,7 @@ const COPY: Record<Language, Copy> = {
     sentTitle: "Sign-in link sent",
     sentBody: e => `Check ${e} and click the link to sign in. It is valid for 15 minutes.`,
     useOther: "Use a different email",
+    noMethods: "Sign-in is temporarily unavailable. Please try again later or contact support.",
     confirmTitle: "Confirm sign-in",
     confirmBody: "Press the button below to finish signing in to SIM uncle.",
     confirmBtn: "Sign in",
@@ -131,6 +135,7 @@ const COPY: Record<Language, Copy> = {
     sentTitle: "ログインリンクを送信しました",
     sentBody: e => `${e} の受信トレイでリンクを開いてログインしてください。リンクは15分間有効です。`,
     useOther: "別のメールを使う",
+    noMethods: "ログインは現在ご利用いただけません。しばらくしてからもう一度お試しいただくか、サポートまでご連絡ください。",
     confirmTitle: "ログインの確認",
     confirmBody: "下のボタンを押して SIM uncle へのログインを完了してください。",
     confirmBtn: "ログイン",
@@ -162,6 +167,7 @@ const COPY: Record<Language, Copy> = {
     sentTitle: "로그인 링크를 보냈습니다",
     sentBody: e => `${e} 받은편지함에서 링크를 눌러 로그인하세요. 링크는 15분 동안 유효합니다.`,
     useOther: "다른 이메일 사용",
+    noMethods: "로그인을 일시적으로 사용할 수 없습니다. 잠시 후 다시 시도하거나 고객 지원에 문의해 주세요.",
     confirmTitle: "로그인 확인",
     confirmBody: "아래 버튼을 눌러 SIM uncle 로그인을 완료하세요.",
     confirmBtn: "로그인",
@@ -193,6 +199,7 @@ const COPY: Record<Language, Copy> = {
     sentTitle: "ส่งลิงก์เข้าสู่ระบบแล้ว",
     sentBody: e => `ตรวจสอบกล่องจดหมายของ ${e} แล้วกดลิงก์เพื่อเข้าสู่ระบบ ลิงก์ใช้ได้ 15 นาที`,
     useOther: "ใช้อีเมลอื่น",
+    noMethods: "ขณะนี้ไม่สามารถเข้าสู่ระบบได้ กรุณาลองใหม่ภายหลังหรือติดต่อฝ่ายสนับสนุน",
     confirmTitle: "ยืนยันการเข้าสู่ระบบ",
     confirmBody: "กดปุ่มด้านล่างเพื่อเข้าสู่ระบบ SIM uncle",
     confirmBtn: "เข้าสู่ระบบ",
@@ -294,6 +301,12 @@ export default function Login() {
         {error && (
           <div role="alert" className="mb-6 rounded-xl border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm text-destructive">
             {error}
+          </div>
+        )}
+
+        {providers && !providers.google && !providers.email && (
+          <div role="alert" className="mb-6 rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+            {c.noMethods}
           </div>
         )}
 
