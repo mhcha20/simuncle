@@ -144,14 +144,14 @@
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
     <script>
-      // v5: Unregister outdated SW before registering new one (fixes iOS Safari blank page)
+      // v6: Unregister outdated SW before registering new one (fixes iOS Safari blank page)
       if ('serviceWorker' in navigator) {
         navigator.serviceWorker.getRegistration('/').then(function(reg) {
           if (reg && reg.active) {
             fetch('/sw.js', { cache: 'no-store' })
               .then(function(r) { return r.text(); })
               .then(function(text) {
-                if (text.indexOf('simuncle-v5') === -1) {
+                if (text.indexOf('simuncle-v6') === -1) {
                   console.log('[PWA] Outdated SW detected, unregistering for fresh start...');
                   reg.unregister().then(function() { window.location.reload(); });
                 }
@@ -162,7 +162,7 @@
 
         window.addEventListener('load', function() {
           navigator.serviceWorker.register('/sw.js')
-            .then(function(reg) { console.log('[PWA] Service Worker v5 registered:', reg.scope); })
+            .then(function(reg) { console.log('[PWA] Service Worker v6 registered:', reg.scope); })
             .catch(function(err) { console.log('[PWA] Service Worker registration failed:', err); });
         });
       }
