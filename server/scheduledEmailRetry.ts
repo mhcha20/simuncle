@@ -5,6 +5,7 @@ import { orders, users } from "../drizzle/schema";
 import { and, eq, isNull, or, sql } from "drizzle-orm";
 import { getVizlyncOrder } from "./vizlync";
 import { sendOrderConfirmationEmail } from "./email";
+import { recoverVizlyncOrders } from "./vizlyncRecovery";
 import { updateOrderStatus, createEmailLog } from "./db";
 
 /**
@@ -120,7 +121,15 @@ export async function handleScheduledEmailRetry(req: Request, res: Response) {
     }
 
     console.log(`[EmailRetry] Done. Sent ${sent}/${pendingOrders.length} emails.`);
-    res.json({ ok: true, processed: pendingOrders.length, sent });
+
+    // Vizlync eSIMs can take minutes to appear: finish those that were completed without a QR.
+    const recovery = await recoverVizlyncOrders().catch(e => {
+      console.warn("[EmailRetry] Vizlync recovery failed:", e);
+      return null;
+    });
+    if (recovery) console.log(`[EmailRetry] Vizlync recovery: ${JSON.stringify(recovery)}`);
+
+    res.json({ ok: true, processed: pendingOrders.length, sent, vizlyncRecovery: recovery });
   } catch (err) {
     console.error("[EmailRetry] Fatal error:", err);
     res.status(500).json({

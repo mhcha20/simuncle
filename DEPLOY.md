@@ -110,10 +110,10 @@
 **首次上線建議只開安全嘅工作。** 舊 Manus 其實只註冊咗一個（已暫停）排程，對帳、提醒等一直冇跑過，所以新站一開全部，客人提醒電郵會即刻出。先設：
 
 ```
-SCHEDULER_JOBS=reconcile-orders,sync-products,sync-tgt-products,update-exchange-rates,check-tgt-sync-status
+SCHEDULER_JOBS=reconcile-orders,email-retry,sync-products,sync-tgt-products,update-exchange-rates,check-tgt-sync-status
 ```
 
-（呢五個唔會發客人電郵。）確認穩定之後，再逐個加 `email-retry`、`pending-reminder`、`expiry-reminder`、`low-usage-alert`，其餘按需要加；全部都要就將 `SCHEDULER_JOBS` 留空。未付款提醒已加上限：只提醒 5 日內嘅訂單。
+（`email-retry` 只處理 24 至 48 小時內嘅訂單，唔會翻查舊客人。**佢一定要開**：Vizlync 文件寫明 eSIM 有時要 1 至 5 分鐘先生成，但結帳只等約 15 秒，遲到嘅 QR 靠呢個工作補發。）確認穩定之後，再逐個加 `pending-reminder`、`expiry-reminder`、`low-usage-alert`，其餘按需要加；全部都要就將 `SCHEDULER_JOBS` 留空。未付款提醒已加上限：只提醒 5 日內嘅訂單。
 
 要改時間就改 `server/scheduler.ts` 嘅 `JOBS`。伺服器停機期間錯過嘅工作唔會補跑，下一個時間點先再行（付款對帳每 10 分鐘一次，所以唔會積壓）。
 
