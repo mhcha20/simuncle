@@ -255,6 +255,8 @@ export async function getProducts(params: {
   minData?: number;
   maxData?: number;
   dailyOnly?: boolean;
+  /** Only plans that can be topped up with extra data. */
+  topUpOnly?: boolean;
   minDays?: number;
   maxDays?: number;
   limit?: number;
@@ -263,7 +265,7 @@ export async function getProducts(params: {
 }) {
   const db = await getDb();
   if (!db) return { products: [], total: 0 };
-  const { search, region, country, countries, minData, maxData, dailyOnly, minDays, maxDays, limit = 20, offset = 0, sortBy = "price_asc" } = params;
+  const { search, region, country, countries, minData, maxData, dailyOnly, topUpOnly, minDays, maxDays, limit = 20, offset = 0, sortBy = "price_asc" } = params;
 
   const conditions = [];
   // Always filter out disabled products for public queries
@@ -314,6 +316,9 @@ export async function getProducts(params: {
   if (dailyOnly) {
     // Daily plans have dataUnit containing "/天" or "/day"
     conditions.push(sql`(${productsCache.dataUnit} LIKE '%/天%' OR LOWER(${productsCache.dataUnit}) LIKE '%/day%')`);
+  }
+  if (topUpOnly) {
+    conditions.push(eq(productsCache.topUpAvailable, true));
   }
   if (minDays != null) {
     conditions.push(sql`${productsCache.validityDays} >= ${minDays}`);

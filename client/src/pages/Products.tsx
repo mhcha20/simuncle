@@ -18,7 +18,7 @@ import {
 } from "@/components/ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
-import { Search, Wifi, X, Check, ChevronDown } from "lucide-react";
+import { Search, Wifi, X, Check, ChevronDown, Zap } from "lucide-react";
 import { Link, useSearch, useLocation } from "wouter";
 import { useState, useEffect, useMemo, useRef } from "react";
 import { motion } from "framer-motion";
@@ -253,6 +253,7 @@ export default function Products() {
   const [countryInputSearch, setCountryInputSearch] = useState("");
   const [dataSize, setDataSize] = useState("all");
   const [duration, setDuration] = useState("all");
+  const [topUpOnly, setTopUpOnly] = useState(params.get("topup") === "1");
   const [sortBy, setSortBy] = useState<"price_asc" | "price_desc" | "validity" | "data">("price_asc");
   const [page, setPage] = useState(0);
   const LIMIT = 24;
@@ -314,10 +315,11 @@ export default function Products() {
     countries: countries.length > 0 ? countries : undefined,
     ...dataSizeFilter,
     ...durationFilter,
+    topUpOnly: topUpOnly || undefined,
     limit: LIMIT,
     offset: page * LIMIT,
     sortBy,
-  }), [searchEn, region, countries, dataSizeFilter, durationFilter, sortBy, page]);
+  }), [searchEn, region, countries, dataSizeFilter, durationFilter, topUpOnly, sortBy, page]);
 
   const productsQuery = trpc.products.list.useQuery(queryInput, {
     staleTime: 3 * 60 * 1000,
@@ -408,10 +410,11 @@ export default function Products() {
     if (countries.length > 0) p.set("countries", countries.join(","));
     if (dataSize !== "all") p.set("data", dataSize);
     if (duration !== "all") p.set("dur", duration);
+    if (topUpOnly) p.set("topup", "1");
     const qs = p.toString();
     setLocation(`/products${qs ? `?${qs}` : ""}`, { replace: true });
     setPage(0);
-  }, [search, region, countries, dataSize, duration]);
+  }, [search, region, countries, dataSize, duration, topUpOnly]);
 
   const regionLabel = (r: string) => translateRegion(r, language);
 
@@ -742,6 +745,18 @@ export default function Products() {
               </SelectContent>
             </Select>
 
+            {/* Top-up filter: only plans that can be recharged with extra data */}
+            <Button
+              type="button"
+              variant={topUpOnly ? "default" : "outline"}
+              aria-pressed={topUpOnly}
+              className="w-full sm:w-auto h-10 gap-1.5"
+              onClick={() => setTopUpOnly(v => !v)}
+            >
+              <Zap className="w-4 h-4" />
+              {t.topup.canTopUp}
+            </Button>
+
             {/* Sort */}
             <Select value={sortBy} onValueChange={(v) => setSortBy(v as typeof sortBy)}>
               <SelectTrigger className="w-full sm:w-48 h-10">
@@ -757,7 +772,7 @@ export default function Products() {
           </div>
 
           {/* Active filters */}
-          {(search || region !== "all" || countries.length > 0 || dataSize !== "all" || duration !== "all") && (
+          {(search || region !== "all" || countries.length > 0 || dataSize !== "all" || duration !== "all" || topUpOnly) && (
             <div className="flex flex-wrap gap-2 mt-3 pt-3 border-t border-border">
               {search && (
                 <Badge variant="secondary" className="gap-1 cursor-pointer" onClick={() => setSearch("")}>
@@ -777,6 +792,11 @@ export default function Products() {
               {dataSize !== "all" && (
                 <Badge variant="secondary" className="gap-1 cursor-pointer" onClick={() => setDataSize("all")}>
                   {dataSize} <X className="w-3 h-3" />
+                </Badge>
+              )}
+              {topUpOnly && (
+                <Badge variant="secondary" className="gap-1 cursor-pointer" onClick={() => setTopUpOnly(false)}>
+                  ⚡ {t.topup.canTopUp} <X className="w-3 h-3" />
                 </Badge>
               )}
               {duration !== "all" && (
@@ -822,7 +842,7 @@ export default function Products() {
           <div className="text-center py-20">
             <Wifi className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
             <h3 className="text-lg font-semibold text-foreground mb-2">{t.products.noResults}</h3>
-            <Button variant="outline" onClick={() => { setSearch(""); setRegion("all"); setDataSize("all"); }}>
+            <Button variant="outline" onClick={() => { setSearch(""); setRegion("all"); setDataSize("all"); setTopUpOnly(false); }}>
               {t.common.retry}
             </Button>
           </div>

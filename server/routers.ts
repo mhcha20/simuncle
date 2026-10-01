@@ -195,6 +195,7 @@ const productsRouter = router({
         minData: z.number().optional(),
         maxData: z.number().optional(),
         dailyOnly: z.boolean().optional(),
+        topUpOnly: z.boolean().optional(),
         minDays: z.number().optional(),
         maxDays: z.number().optional(),
         limit: z.number().min(1).max(100).default(24),
