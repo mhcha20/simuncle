@@ -820,3 +820,36 @@ export async function confirmAndFulfillBySession(sessionId: string): Promise<Con
     return { status: "error" };
   }
 }
+
+
+/**
+ * Refund the Stripe payment of a single order in full and mark it "refunded".
+ * Does not cancel the eSIM at the supplier (terminate the plan separately).
+ * Orders paid together in one batch checkout share one payment, so they are refused here
+ * and have to be refunded from the Stripe dashboard.
+ */
+export async function refundOrderPayment(orderId: number): Promise<{ refundId: string; alreadyRefunded: boolean }> {
+  const { adminGetOrderById } = await import("./db");
+  const order = await adminGetOrderById(orderId);
+  if (!order) throw new Error("Order not found");
+  if (order.status === "pending_payment") throw new Error("This order has not been paid");
+  if (order.status === "refunded") throw new Error("This order is already refunded");
+
+  let paymentIntentId = order.stripePaymentIntentId ?? null;
+  if (order.stripeSessionId) {
+    const session = await stripe.checkout.sessions.retrieve(order.stripeSessionId);
+    if (session.metadata?.is_batch === "true") {
+      throw new Error("This order was paid together with other orders; refund it from the Stripe dashboard");
+    }
+    if (!paymentIntentId && typeof session.payment_intent === "string") paymentIntentId = session.payment_intent;
+  }
+  if (!paymentIntentId) throw new Error("No Stripe payment found for this order");
+
+  // The idempotency key makes a double click return the same refund instead of failing or repeating.
+  const refund = await stripe.refunds.create(
+    { payment_intent: paymentIntentId, metadata: { order_id: String(orderId) } },
+    { idempotencyKey: `refund-order-${orderId}` },
+  );
+  await updateOrderStatus(orderId, "refunded");
+  return { refundId: refund.id, alreadyRefunded: false };
+}

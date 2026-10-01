@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { useState } from "react";
 import { Link } from "wouter";
-import { ArrowLeft, Search, RefreshCw, Mail, ChevronLeft, ChevronRight, MessageCircle, Wifi, AlertCircle, CheckCircle2, Copy, ExternalLink, Trash2, Zap, BarChart2, CalendarClock, Clock, History, CheckCheck, XCircle } from "lucide-react";
+import { ArrowLeft, Search, RefreshCw, Mail, ChevronLeft, ChevronRight, MessageCircle, Wifi, AlertCircle, CheckCircle2, Copy, ExternalLink, Trash2, Zap, BarChart2, CalendarClock, Clock, History, CheckCheck, XCircle, Undo2 } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { formatDateTime, formatDate } from "@/lib/utils";
 import { Progress } from "@/components/ui/progress";
@@ -480,6 +480,17 @@ export default function AdminOrders() {
   });
 
   const [terminateConfirm, setTerminateConfirm] = useState<{ open: boolean; orderId: number | null; orderNum: string }>({ open: false, orderId: null, orderNum: "" });
+
+  const [refundConfirm, setRefundConfirm] = useState<{ open: boolean; orderId: number | null; orderNum: string; completed: boolean }>({ open: false, orderId: null, orderNum: "", completed: false });
+
+  const refundMutation = trpc.adminOrders.refundOrder.useMutation({
+    onSuccess: () => {
+      toast.success(language === "en" ? "Refund issued via Stripe" : "已透過 Stripe 退款");
+      setRefundConfirm({ open: false, orderId: null, orderNum: "", completed: false });
+      ordersQuery.refetch();
+    },
+    onError: (err) => toast.error(err.message),
+  });
 
   const terminatePlanMutation = trpc.adminOrders.terminatePlan.useMutation({
     onSuccess: () => {
@@ -1051,6 +1062,20 @@ export default function AdminOrders() {
                               </Button>
                             )}
 
+                            {/* Refund - paid orders only */}
+                            {["paid", "processing", "completed", "failed", "terminated"].includes(order.status) && (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="gap-1 text-xs h-7 text-purple-600 hover:text-purple-800 hover:bg-purple-50"
+                                onClick={() => setRefundConfirm({ open: true, orderId: order.id, orderNum: String(order.id), completed: order.status === "completed" })}
+                                title={language === "en" ? "Refund payment" : "退款"}
+                              >
+                                <Undo2 className="w-3 h-3" />
+                                {language === "en" ? "Refund" : "退款"}
+                              </Button>
+                            )}
+
                             {/* Delete order */}
                             <Button
                               variant="ghost"
@@ -1143,6 +1168,49 @@ export default function AdminOrders() {
                 <Trash2 className="w-4 h-4" />
               )}
               {language === "en" ? "Delete" : "確認刪除"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Refund Confirm Dialog */}
+      <Dialog open={refundConfirm.open} onOpenChange={(open) => setRefundConfirm((d) => ({ ...d, open }))}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-purple-600">
+              <Undo2 className="w-5 h-5" />
+              {language === "en" ? "Refund payment" : "退款"}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="py-3 space-y-2 text-sm text-foreground">
+            <p>
+              {language === "en"
+                ? `Refund the full payment of order #${refundConfirm.orderNum} to the customer's card via Stripe? This cannot be undone.`
+                : `確定將訂單 #${refundConfirm.orderNum} 嘅款項全數經 Stripe 退返畀客人？此操作無法復原。`}
+            </p>
+            {refundConfirm.completed && (
+              <p className="text-orange-600">
+                {language === "en"
+                  ? "The eSIM has already been issued and is not cancelled by a refund. Use Terminate first if it should stop working."
+                  : "eSIM 已經發出，退款唔會自動停用。如要停用，請先撳「終止」。"}
+              </p>
+            )}
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setRefundConfirm({ open: false, orderId: null, orderNum: "", completed: false })}
+              disabled={refundMutation.isPending}
+            >
+              {language === "en" ? "Cancel" : "取消"}
+            </Button>
+            <Button
+              className="gap-2 bg-purple-600 hover:bg-purple-700 text-white"
+              onClick={() => refundConfirm.orderId && refundMutation.mutate({ orderId: refundConfirm.orderId })}
+              disabled={refundMutation.isPending}
+            >
+              {refundMutation.isPending ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Undo2 className="w-4 h-4" />}
+              {language === "en" ? "Refund" : "確認退款"}
             </Button>
           </DialogFooter>
         </DialogContent>

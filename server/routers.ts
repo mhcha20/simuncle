@@ -79,7 +79,7 @@ import {
   terminateVizlyncOrder,
 } from "./vizlync";
 import { buildSupportContext } from "./supportContext";
-import { appendQuery, createCheckoutSession, createTopupCheckoutSession, confirmAndFulfillBySession, resumeTopupCheckout } from "./stripe";
+import { appendQuery, refundOrderPayment, createCheckoutSession, createTopupCheckoutSession, confirmAndFulfillBySession, resumeTopupCheckout } from "./stripe";
 import { fetchAllTgtProducts, normalizeTgtProduct, createTgtOrder, queryTgtUsage } from "./tgt";
 import { sendOrderConfirmationEmail, sendCustomEmailToCustomer, sendTerminationEmail } from "./email";
 import { articlesRouter } from "./routers/articles";
@@ -2034,6 +2034,16 @@ const adminOrdersRouter = router({
       if (!order) throw new TRPCError({ code: "NOT_FOUND", message: "Order not found" });
       await adminDeleteOrder(input.orderId);
       return { success: true };
+    }),
+
+  refundOrder: adminProcedure
+    .input(z.object({ orderId: z.number().int() }))
+    .mutation(async ({ input }) => {
+      try {
+        return await refundOrderPayment(input.orderId);
+      } catch (error) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: error instanceof Error ? error.message : "Refund failed" });
+      }
     }),
 
   getPendingReminderStats: adminProcedure.query(async () => {
