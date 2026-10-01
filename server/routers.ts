@@ -78,6 +78,7 @@ import {
   combineUsage,
   terminateVizlyncOrder,
 } from "./vizlync";
+import { buildSupportContext } from "./supportContext";
 import { appendQuery, createCheckoutSession, createTopupCheckoutSession, confirmAndFulfillBySession, resumeTopupCheckout } from "./stripe";
 import { fetchAllTgtProducts, normalizeTgtProduct, createTgtOrder, queryTgtUsage } from "./tgt";
 import { sendOrderConfirmationEmail, sendCustomEmailToCustomer, sendTerminationEmail } from "./email";
@@ -171,10 +172,16 @@ Key facts:
 - 24/7 support available via WhatsApp: +852 98885159`,
       };
       const systemPrompt = systemPromptMap[lang] ?? systemPromptMap["zh-TW"];
+      // Ground the answer in this shop's real facts and, when a destination is named, its live plans.
+      const lastUserText = [...input.messages].reverse().find(m => m.role === "user")?.content ?? "";
+      const context = await buildSupportContext(lastUserText, { getProducts, getSetting }).catch(error => {
+        console.warn("[SupportChat] could not build shop context:", error instanceof Error ? error.message : error);
+        return "";
+      });
       const response = await invokeLLM({
         messages: [
-          { role: "system", content: systemPrompt },
-          ...input.messages,
+          { role: "system", content: context ? `${systemPrompt}\n\n${context}` : systemPrompt },
+          ...input.messages.slice(-12),
         ],
         max_tokens: 1024,
       });
