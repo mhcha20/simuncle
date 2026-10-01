@@ -1,0 +1,363 @@
+
+    Partner API Documentation
+         ☰
+            API Documentation
+            Partner API v1.3
+                🔐 Authentication
+                📋 Endpoints Overview
+                GET /products
+                POST /order
+                GET /order/{orderId}
+                GET /usage/{orderId}
+                GET /order/{orderId}/topup-plans
+                POST /order/{orderId}/topup
+                POST /order/{orderId}/terminate-plan
+                ⚠️ Error Codes
+            Partner API Documentation
+                This API allows authorized partners to fetch product data, place and track orders, and view usage information.
+            API Authentication
+            All API requests require the following HTTP headers:
+                Authorization: Bearer {your_api_key}
+                X-Partner-ID: {your_partner_id}
+                    API Key
+                    Partner ID
+                Base URL
+                Note: You can obtain your API key and Partner ID from the Partner Portal.
+            Endpoints
+                    All Endpoints
+                                    GET
+                                    /products
+                                Returns a list of all available products
+                                    POST
+                                    /order
+                                Places a new order and returns essential summary information
+                                    GET
+                                    /order/{orderId}
+                                Retrieve order details using order ID
+                                    GET
+                                    /usage/{orderId}
+                                Returns usage details for a specific order
+                                    GET
+                                    /order/{orderId}/topup-plans
+                                Returns available topup plans for a completed order
+                                    POST
+                                    /order/{orderId}/topup
+                                Creates a topup order for an existing completed order
+                                    POST
+                                    /order/{orderId}/terminate-plan
+                                Terminates an active plan and activates queued top-up
+                    GET
+                    /products
+                Returns a list of all available products.
+                    Note: The countries
+ field contains the specific countries supported by each individual plan, not all countries in the region. Each plan may support different countries even within the same region.
+ -->
+                        Example
+                        Try it
+                            Copy
+                            curl -X GET "https://partner-api.your-domain.com/api/v1/products" \
+  -H "Authorization: Bearer your-api-key" \
+  -H "X-Partner-ID: your-partner-id"
+                        Response
+                            Copy
+                            {
+  "success": true,
+  "data": {
+    "products": [
+      {
+        "productId": "FXTEND132075",
+        "name": "Oceania 3 GB",
+        "description": "Key Features:\n• This is a data-only eSIM. It does not come with a phone number.\n• Simply scan the QR code to download and use the eSIM. No other activation or registration steps needed.\n• Validity will start upon downloading the eSIM to your device and connecting to network.\n• One-time prepaid package. No auto-renewals, no contracts. The eSIM is rechargeable and can be topped up with additional data packages.\n• Full data speeds - no daily limits, no throttling. Mobile hotspot is supported.\n• Usable only with eSIM compatible phones and tablets which are not carrier locked. If in doubt, please check the FAQ section.\n• Please start using the eSIM no more than 3 months after purchase.",
+        "planInfo": "HTML formatted plan information with key features and usage instructions",
+        "instructions": null,
+        "price": 29.99,
+        "validityDays": 7,
+        "countries":[
+          {
+            "id": "SG",
+            "name": "Singapore"
+          }
+        ],
+        "region": ["Asia"],
+        "dataAmount": 3,
+        "dataUnit": "GB",
+        "customPlanData": null,
+        "voiceMin": null,
+        "voiceMinUnit": null, //Min
+        "sms":100,
+        "speed": "Unrestricted", //Unrestricted or Restricted
+        "planType": "Fixed",
+        "category": "esim_realtime", //esim_realtime or esim_addon
+        "networkName": "Telstra",
+        "networkType": "4G/LTE",
+        "isVoiceAvailable": false,
+        "isSmsAvailable": true,
+        "hotspotAvailable": true,
+        "topUpAvailable": false,
+        "profile": "local", //local or roaming
+        "activationPolicy": "Activation upon purchase", //Activation upon purchase / Activation upon first usage / Activation upon travel date
+        "startDateEnabled": false,
+        "features": []
+      }
+    ],
+    "total": 18663
+  }
+}
+                            Send Request
+                                    Response
+                                        Refresh
+                    POST
+                    /order
+                Places a new order for an eSIM product. Returns essential order information only. Use the Order Details endpoint with the returned orderId to retrieve complete order information including eSIM details, pricing, and fulfillment data.
+                        Example
+                        Try it
+                            Copy
+                            curl -X POST "https://partner-api.your-domain.com/api/v1/order" \
+  -H "Authorization: Bearer your-api-key" \
+  -H "X-Partner-ID: your-partner-id" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "productId": "ABCDEF123456",
+    "startDate": "2023-11-01"
+  }'
+                        Response
+                            Copy
+                            {
+  "success": true,
+  "orderId": "VLZ123456",
+  "message": "Order created successfully"
+}
+                            Note: The order creation response contains only essential summary information. To retrieve complete order details including eSIM data, pricing, and fulfillment information, use the GET /order/{orderId} endpoint with the returned orderId.
+                                Product ID
+                                Start Date (Optional)
+                                Request Body
+                                {
+  "productId": "",
+  "startDate": null
+}
+                            Send Request
+                                    Response
+                                        Refresh
+                    GET
+                    /order/{orderId}
+                Retrieve order details using order ID including eSIM data, pricing, and fulfillment information.
+                        Example
+                        Try it
+                            Copy
+                            curl -X GET "https://partner-api.your-domain.com/api/v1/order/VLZ123456" \
+  -H "Authorization: Bearer your-api-key" \
+  -H "X-Partner-ID: your-partner-id"
+                        Response
+                            Copy
+                            {
+  "success": true,
+  "data": {
+    "orderId": "VLZ123456",
+    "status": "completed",
+    "product": {
+      "productId": "ABCDEF123456",
+      "name": "Europe 5GB / 30 Days"
+    },
+    "orderTotal": 29.99,
+    "quantity": 1,
+    "startDate": "2023-11-01",
+    "expiryDate": "2023-12-01",
+    "iccid": "8991000123456789012",
+    "smdpAddress": "trl.prod.ondemandconnectivity.com",
+    "accessPointName": "mbb",
+    "lpaString": "LPA:1$trl.prod.ondemandconnectivity.com$AAA22",
+    "activationCode": "MNAG18JND6GSH",
+    "phoneNumber":"+1673885236",
+    "pin": 6734,
+    "puk": 78372898,
+    "walletAuthTransactionId": "3af708eb-dbbf-45cc-9fc3-b447aa532b65",
+    "createdAt": "2023-10-25T14:30:45Z"
+  }
+}
+                Note: Some orders may take 1–5 minutes to reflect complete data, as they start in a pending status. Once the order is marked as completed, full details will be available. Try refreshing the request to see the latest status.
+                                Order ID
+                            Send Request
+                                    Response
+                                        Refresh
+                    GET
+                    /usage/{orderId}
+                Returns usage details for a specific order.
+                        Example
+                        Try it
+                            Copy
+                            curl -X GET "https://partner-api.your-domain.com/api/v1/usage/VLZ123456" \
+  -H "Authorization: Bearer your-api-key" \
+  -H "X-Partner-ID: your-partner-id"
+                        Response
+                            Copy
+                            {
+  "success": true,
+  "data": {
+    "orderId": "VLZ123456",
+    "dataUsage": 2147483648,
+    "dataAllowance": 5368709120,
+    "status": "Active",
+    "expiryDate": "2023-12-01T00:00:00Z",
+    "lastUpdated": "2023-11-15T09:45:22Z",
+    "message": "Usage data retrieved successfully",
+    "isRealtime": true,
+    "fromCache": false
+  }
+}
+                                Order ID
+                            Send Request
+                                    Response
+                                        Refresh
+                    GET
+                    /order/{orderId}/topup-plans
+                Returns available topup plans for a completed order. Topup functionality is available for for all the orders that support topup.
+                        Example
+                        Try it
+                            Copy
+                            curl -X GET "https://partner-api.your-domain.com/api/v1/order/VLZ123456/topup-plans" \
+  -H "Authorization: Bearer your-api-key" \
+  -H "X-Partner-ID: your-partner-id"
+                        Response
+                            Copy
+                            {
+  "success": true,
+  "data": {
+    "originalOrder": {
+      "orderId": "VLZ123456",
+      "productId": "ABCDEF123456",
+      "name": "Europe 5GB / 30 Days",
+      "iccid": "8991000123456789012"
+    },
+    "topupPlans": [
+      {
+        "productId": "ADDON001",
+        "name": "Europe 1GB Addon",
+        "description": "Additional 1GB data for Europe",
+        "planInfo": "HTML formatted plan information with key features and usage instructions",
+        "price": 9.99,
+        "validityDays": 30,
+        "dataAmount": 1,
+        "dataUnit": "GB",
+        "customPlanData": "1gb addon",
+        "voiceMin": null,
+        "voiceMinUnit": "Min",
+        "sms":null,
+        "speed": "Unrestricted",
+        "planType": "Addon",
+        "category": "esim_addon",
+        "networkType": "4G/LTE",
+        "countries": [
+          {
+            "id": "FR",
+            "name": "France"
+          }
+        ],
+        "region": ["Europe"],
+        "features": ["5G Support"],
+        "isVoiceAvailable": false,
+        "isSmsAvailable": false,
+        "hotspotAvailable": true,
+        "profile": "roaming",
+      }
+    ]
+  }
+}
+                                Order ID
+                            Send Request
+                                    Response
+                                        Refresh
+                    POST
+                    /order/{orderId}/topup
+                Creates a topup order for an existing completed order. This adds additional data/services to an existing eSIM.
+                        Example
+                        Try it
+                            Copy
+                            curl -X POST "https://partner-api.your-domain.com/api/v1/order/VLZ123456/topup" \
+  -H "Authorization: Bearer your-api-key" \
+  -H "X-Partner-ID: your-partner-id" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "productId": "ADDON001"
+  }'
+                        Response
+                            Copy
+                            {
+  "success": true,
+  "data": {
+    "topupOrderId": "VLZ789012",
+    "originalOrderId": "VLZ123456",
+    "status": "completed",
+    "message": "Topup order created successfully"
+  }
+}
+                            Note: Topup orders are processed immediately and will show a status of "completed" upon successful creation. The topup data/services are added to the existing eSIM associated with the original order.
+                                Original Order ID
+                                Topup Product ID
+                                Request Body
+                                {
+  "productId": ""
+}
+                            Send Request
+                                    Response
+                                        Refresh
+                POST
+                /order/{orderId}/terminate-plan
+            Terminates an active data plan for applicable orders. This deactivates the current plan on the eSIM and activates any queued top-up plan. Only active (non-expired) plans can be terminated.
+                For some orders that supports top-up doesn't require the current plan to be terminated before activating the top-up plan, in which case this endpoint does not need to be called and will return an error if called.
+                "After the main plan is terminated early, the user should toggle Airplane Mode on and then off to allow the new top-up plan to activate".
+                Warning: This action cannot be undone. Any remaining data on the current plan will be lost. A top-up order must already exist for this order.
+                    Example
+                    Try it
+                        Copy
+                        curl -X POST "https://partner-api.your-domain.com/api/v1/order/VLZ123456/terminate-plan" \
+  -H "Authorization: Bearer your-api-key" \
+  -H "X-Partner-ID: your-partner-id" \
+  -H "Content-Type: application/json" 
+                    Response
+                        Copy
+                        {
+  "success": true,
+  "message": "Termination Successful",
+}
+                            Order ID
+                        Send Request
+                                Response
+                                    Refresh
+            Error Codes
+                        Code
+                        Description
+                        400 Bad Request
+                        The request was malformed or contained invalid parameters
+                        400 Invalid Order ID
+                        Order ID contains invalid characters
+                        400 Order Not Completed
+                        Order is in pending or Failed State state
+                        400 Topup Not Supported
+                        This plan does not support topup
+                        400 Provider Not Supported
+                        This provider does not support topup
+                        400 Invalid Topup Plan
+                        Only addon plans can be used for topup
+                        400 Network Not Found
+                        Cannot determine network for topup plans
+                        400 ICCID Not Found
+                        Cannot find ICCID for plan
+                        400 Insufficient Balance
+                        Insufficient wallet balance for creating an order
+                        401 Unauthorized
+                        Invalid API key or partner ID
+                        403 Access Denied
+                        You do not have access to this order
+                        404 Order Not Found
+                        Order not found
+                        404 Product Not Found
+                         product not found or not available
+                        404 Not Found
+                        Resource not found
+                        408 Request Timeout
+                        Server closed connection due to client timeout
+                        500 Topup Order Creation Failed
+                        Failed to create topup order
+                        500 Internal Server Error
+                        General server error
+            © 2026 eSIM Platform. All rights reserved.
