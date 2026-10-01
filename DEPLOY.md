@@ -87,6 +87,18 @@
 - `JWT_SECRET` 係新嘅，所有人會被登出一次，冇問題。
 - Umami 分析：新開一個 Umami Cloud 網站，填 `VITE_UMAMI_SCRIPT_URL`／`VITE_UMAMI_WEBSITE_ID`；月度報告另需 `UMAMI_API_URL`／`UMAMI_API_KEY`／`UMAMI_WEBSITE_ID`（唔填就唔會有流量部分）。舊 Manus 嘅 Umami 數據唔會搬過嚟。
 
+## 5b. 訂單編號分隔（搬遷期間必須）
+
+TGT 用 `SU<訂單編號>` 認單，亦用佢做防重複下單 key。舊站同新站如果都出同一個訂單編號，TGT 會將兩個客人嘅單當成同一張。所以新站要設：
+
+```
+ORDER_ID_FLOOR=5000000
+```
+
+網站啟動時會將 `orders`、`topup_orders` 嘅下一個編號提高到 5,000,000（只升不降，重複行冇影響）。
+
+**最後匯入 Manus 切換期間新訂單前：** 先刪走 Railway 上所有測試訂單（編號大過匯入快照嘅），否則編號可能撞。
+
 ## 6. 排程（內建）
 
 伺服器每分鐘檢查一次時間表（UTC），到時自己 `POST` 去 `/api/scheduled/*`：
@@ -126,6 +138,7 @@ SCHEDULER_JOBS=reconcile-orders,email-retry,sync-products,sync-tgt-products,upda
 - 舊會員登入後 `/orders` 見到舊訂單
 - **用 Stripe 測試模式 + TGT sandbox 落一張單**：付款 → 供應商建單 → TGT callback → QR → 確認電郵
 - Vizlync 用量、增購、後台補發 eSIM、AI 客服、文章翻譯（LLM）、推播
+- 付款後 TGT 嘅 QR 如果收唔到 callback（例如 callback 去咗舊站），`email-retry` 會每 15 分鐘直接問 TGT 補返，唔使等。
 
 ## 8. 切換域名（建議喺低流量時段做）
 

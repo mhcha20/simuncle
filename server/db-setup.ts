@@ -114,6 +114,27 @@ async function ensureOrdersColumns(db: Db) {
   }
 }
 
+/**
+ * During the move from Manus both sites may take orders for a while. Order ids are
+ * sent to TGT as "SU<id>" (and used as its idempotency key), so the same id on both
+ * sites would make TGT mix up two customers. Setting ORDER_ID_FLOOR (for example
+ * 5000000) lifts this site's next order/top-up ids above anything Manus will issue.
+ * It never lowers a counter and does nothing when the variable is unset.
+ */
+async function applyIdFloor(db: Db) {
+  const floor = Number(process.env.ORDER_ID_FLOOR ?? "");
+  if (!Number.isInteger(floor) || floor <= 0) return;
+  for (const table of ["orders", "topup_orders"]) {
+    const [rows] = (await db.execute(
+      sql`select auto_increment as n from information_schema.tables where table_schema = database() and table_name = ${table}`,
+    )) as unknown as [Array<{ n: number | string | null }>];
+    const current = Number(rows[0]?.n ?? 0);
+    if (current >= floor) continue;
+    await db.execute(sql.raw(`alter table \`${table}\` auto_increment = ${floor}`));
+    console.log(`[db-setup] ${table}: next id raised from ${current} to ${floor}`);
+  }
+}
+
 export async function runDatabaseSetup() {
   const db = await getDb();
   if (!db) throw new Error("DATABASE_URL is required");
@@ -121,5 +142,6 @@ export async function runDatabaseSetup() {
   await reconcilePreRailwayHistory(db);
   await migrate(db, { migrationsFolder: MIGRATIONS_FOLDER, migrationsTable: MIGRATIONS_TABLE });
   await ensureOrdersColumns(db);
+  await applyIdFloor(db);
   console.log("[db-setup] database is up to date");
 }

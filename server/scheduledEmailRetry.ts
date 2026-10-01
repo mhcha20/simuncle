@@ -6,6 +6,7 @@ import { and, eq, isNull, or, sql } from "drizzle-orm";
 import { getVizlyncOrder } from "./vizlync";
 import { sendOrderConfirmationEmail } from "./email";
 import { recoverVizlyncOrders } from "./vizlyncRecovery";
+import { recoverTgtOrders } from "./tgtRecovery";
 import { updateOrderStatus, createEmailLog } from "./db";
 
 /**
@@ -129,7 +130,14 @@ export async function handleScheduledEmailRetry(req: Request, res: Response) {
     });
     if (recovery) console.log(`[EmailRetry] Vizlync recovery: ${JSON.stringify(recovery)}`);
 
-    res.json({ ok: true, processed: pendingOrders.length, sent, vizlyncRecovery: recovery });
+    // TGT QR codes arrive by callback; ask TGT directly for any whose callback never came.
+    const tgtRecovery = await recoverTgtOrders().catch(e => {
+      console.warn("[EmailRetry] TGT recovery failed:", e);
+      return null;
+    });
+    if (tgtRecovery) console.log(`[EmailRetry] TGT recovery: ${JSON.stringify(tgtRecovery)}`);
+
+    res.json({ ok: true, processed: pendingOrders.length, sent, vizlyncRecovery: recovery, tgtRecovery });
   } catch (err) {
     console.error("[EmailRetry] Fatal error:", err);
     res.status(500).json({

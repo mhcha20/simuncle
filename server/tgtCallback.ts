@@ -55,6 +55,20 @@ export async function handleTgtCallback(req: Request, res: Response) {
     return res.json({ code: "0000", msg: "success" });
   }
 
+  await completeTgtOrder(orderId, orderInfo);
+
+  return res.json({ code: "0000", msg: "success" });
+}
+
+export type TgtOrderInfoPayload = TgtCallbackPayload["data"]["orderInfo"];
+
+/**
+ * Save the eSIM TGT delivered for a local order, mark it completed and tell the
+ * customer (in-app notice, push, owner alert, confirmation email).
+ * Used by the callback and by the recovery job that polls TGT when a callback never arrived.
+ * Errors are logged, not thrown, so the callback can still answer TGT with "0000".
+ */
+export async function completeTgtOrder(orderId: number, orderInfo: TgtOrderInfoPayload): Promise<void> {
   // Build esimData in the same shape as Vizlync so the frontend can reuse it
   const esimData: Record<string, string | null> = {
     qrCode: orderInfo.qrCode ?? null,
@@ -204,6 +218,4 @@ export async function handleTgtCallback(req: Request, res: Response) {
     console.error(`[TGT Callback] Failed to update order ${orderId}:`, err);
     // Still respond success to TGT to prevent retry loop
   }
-
-  return res.json({ code: "0000", msg: "success" });
 }
