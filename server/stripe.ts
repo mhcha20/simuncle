@@ -369,6 +369,13 @@ export async function handleCheckoutCompleted(session: Stripe.Checkout.Session) 
     console.log(`[Stripe] Order ${orderId} already completed, skipping re-fulfillment`);
     return;
   }
+  // The webhook and the success page's confirm-payment call can both arrive for the same payment.
+  // An order already handed to the supplier (processing + supplier order id, e.g. TGT waiting for
+  // its callback) must not be fulfilled or emailed a second time.
+  if (existingOrder && existingOrder.status === "processing" && existingOrder.supplierOrderId) {
+    console.log(`[Stripe] Order ${orderId} already sent to supplier (${existingOrder.supplierOrderId}), skipping re-fulfillment`);
+    return;
+  }
 
   // Get customer email from Stripe session (Stripe collects it during checkout for guest orders)
   // Priority: customer_details.email (most reliable) > metadata fields
