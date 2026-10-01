@@ -134,6 +134,12 @@ async function startServer() {
     createExpressMiddleware({
       router: appRouter,
       createContext,
+      // tRPC stays silent in production; log server-side failures so they show up in Railway's logs.
+      onError({ error, path }) {
+        if (error.code === "INTERNAL_SERVER_ERROR") {
+          console.error(`[tRPC] ${path ?? "?"}: ${error.message}`);
+        }
+      },
     })
   );
   // development mode uses Vite, production mode uses static files
