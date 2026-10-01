@@ -4,6 +4,8 @@ const retrieveMock = vi.fn();
 const refundCreateMock = vi.fn();
 const adminGetOrderByIdMock = vi.fn();
 const updateOrderStatusMock = vi.fn();
+const sendCustomEmailMock = vi.fn();
+const createEmailLogMock = vi.fn();
 
 vi.mock("stripe", () => ({
   default: class {
@@ -14,7 +16,8 @@ vi.mock("stripe", () => ({
 }));
 vi.mock("./db", () => ({
   createOrder: vi.fn(), getOrderById: vi.fn(), getOrderByStripeSession: vi.fn(), getSetting: vi.fn(),
-  createNotification: vi.fn(), createTopupOrder: vi.fn(), createEmailLog: vi.fn(), getProductById: vi.fn(),
+  createNotification: vi.fn(), createTopupOrder: vi.fn(), createEmailLog: createEmailLogMock, getProductById: vi.fn(),
+  getCustomerEmailByUserId: vi.fn(async () => "member@example.com"),
   updateTopupOrderStatus: vi.fn(), getTopupOrderById: vi.fn(),
   updateOrderStatus: updateOrderStatusMock,
   adminGetOrderById: adminGetOrderByIdMock,
@@ -22,7 +25,7 @@ vi.mock("./db", () => ({
 vi.mock("./vizlync", () => ({ createVizlyncOrder: vi.fn(), getVizlyncOrder: vi.fn(), createTopupOrder: vi.fn() }));
 vi.mock("./tgt", () => ({ createTgtOrder: vi.fn(), getTgtOrderByChannelNo: vi.fn() }));
 vi.mock("./_core/notification", () => ({ notifyOwner: vi.fn() }));
-vi.mock("./email", () => ({ sendOrderConfirmationEmail: vi.fn() }));
+vi.mock("./email", () => ({ sendOrderConfirmationEmail: vi.fn(), sendCustomEmailToCustomer: sendCustomEmailMock }));
 
 const order = (over: Record<string, unknown> = {}) => ({
   id: 5000003, status: "completed", stripePaymentIntentId: "pi_1", stripeSessionId: "cs_1", ...over,
@@ -31,7 +34,8 @@ const order = (over: Record<string, unknown> = {}) => ({
 beforeEach(() => {
   vi.clearAllMocks();
   retrieveMock.mockResolvedValue({ metadata: {}, payment_intent: "pi_1" });
-  refundCreateMock.mockResolvedValue({ id: "re_1" });
+  refundCreateMock.mockResolvedValue({ id: "re_1", amount: 500, currency: "hkd" });
+  sendCustomEmailMock.mockResolvedValue(true);
 });
 
 describe("refundOrderPayment", () => {
@@ -45,6 +49,20 @@ describe("refundOrderPayment", () => {
       { idempotencyKey: "refund-order-5000003" },
     );
     expect(updateOrderStatusMock).toHaveBeenCalledWith(5000003, "refunded");
+  });
+
+  it("emails the customer and logs it, and a failed email does not undo the refund", async () => {
+    adminGetOrderByIdMock.mockResolvedValue(order({ guestEmail: "guest@example.com" }));
+    const { refundOrderPayment } = await import("./stripe");
+    await refundOrderPayment(5000003);
+    expect(sendCustomEmailMock.mock.calls[0][0].to).toBe("guest@example.com");
+    expect(sendCustomEmailMock.mock.calls[0][0].content).toContain("HKD 5.00");
+    expect(createEmailLogMock.mock.calls[0][0]).toMatchObject({ orderId: 5000003, emailType: "refund", status: "sent" });
+
+    sendCustomEmailMock.mockRejectedValue(new Error("resend down"));
+    adminGetOrderByIdMock.mockResolvedValue(order({ id: 7, guestEmail: "guest@example.com" }));
+    await expect(refundOrderPayment(7)).resolves.toMatchObject({ refundId: "re_1" });
+    expect(updateOrderStatusMock).toHaveBeenCalledWith(7, "refunded");
   });
 
   it("falls back to the payment on the checkout session", async () => {

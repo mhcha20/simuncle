@@ -851,5 +851,37 @@ export async function refundOrderPayment(orderId: number): Promise<{ refundId: s
     { idempotencyKey: `refund-order-${orderId}` },
   );
   await updateOrderStatus(orderId, "refunded");
+  await sendRefundNotice(order, refund).catch(error => {
+    console.error(`[Refund] Order ${orderId} refunded but the notice email failed:`, error instanceof Error ? error.message : error);
+  });
   return { refundId: refund.id, alreadyRefunded: false };
+}
+
+/** Tell the customer a refund was issued (best effort; the refund itself has already succeeded). */
+async function sendRefundNotice(
+  order: { id: number; userId?: number | null; guestEmail?: string | null; productName?: string | null },
+  refund: { amount?: number | null; currency?: string | null },
+) {
+  const { getCustomerEmailByUserId } = await import("./db");
+  const { sendCustomEmailToCustomer } = await import("./email");
+  const to = order.guestEmail || (order.userId ? await getCustomerEmailByUserId(order.userId) : null);
+  if (!to) return;
+  const amount = refund.amount != null ? `${(refund.currency ?? "hkd").toUpperCase()} ${(refund.amount / 100).toFixed(2)}` : "";
+  const product = order.productName ? `（${order.productName}）` : "";
+  const subject = `SIM uncle 退款通知 Refund notice - #${order.id}`;
+  const content =
+    `你好，\n\n你嘅訂單 #${order.id}${product}已經退款${amount ? `，退款金額 ${amount}` : ""}，款項會退返你付款時用嘅信用卡／付款方式。` +
+    `視乎發卡銀行，一般需要 5–10 個工作天先會顯示。\n\n如有疑問，請回覆此電郵或 WhatsApp +852 98885159。\n\n` +
+    `Hello,\n\nYour order #${order.id} has been refunded${amount ? ` (${amount})` : ""} to your original payment method. ` +
+    `Depending on your bank it can take 5–10 business days to appear. Reply to this email or WhatsApp +852 98885159 if you have any questions.`;
+  const ok = await sendCustomEmailToCustomer({ to, subject, content });
+  await createEmailLog({
+    orderId: order.id,
+    userId: order.userId ?? null,
+    toEmail: to,
+    emailType: "refund",
+    subject,
+    status: ok ? "sent" : "failed",
+    errorMessage: ok ? null : "Resend API returned failure",
+  });
 }
