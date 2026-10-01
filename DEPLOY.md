@@ -8,7 +8,7 @@
 | 圖片／檔案 | Manus Storage | Cloudflare R2（或任何 S3 相容儲存） |
 | 資料庫 | Manus 託管 TiDB | Railway MySQL |
 | 排程 | Manus Heartbeat | 伺服器內建排程（`server/scheduler.ts`，13 個工作） |
-| AI（翻譯、SEO 文章、客服） | Manus LLM | Anthropic API（`LLM_API_KEY`） |
+| AI（翻譯、SEO 文章、客服） | Manus LLM | Anthropic API 或 OpenRouter（`LLM_API_KEY`；`sk-or-` 開頭自動用 OpenRouter，`LLM_MODEL` 填 `vendor/model`） |
 | 站主通知 | Manus 通知 | Resend 寄 email 去 `OWNER_EMAIL` |
 
 舊會員用**同一個 email** 登入（Google 或電郵連結都得），就會自動對返佢原本嘅帳戶、訂單、購物車、推薦碼同管理員權限。`ADMIN_EMAILS` 入面嘅 email 一定係管理員。

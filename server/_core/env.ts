@@ -26,6 +26,8 @@ export const ENV = {
 
   // LLM (Anthropic)
   llmApiKey: process.env.LLM_API_KEY ?? process.env.ANTHROPIC_API_KEY ?? "",
+  /** "anthropic" (default) | "openrouter" | "openai" (any OpenAI-compatible endpoint, set LLM_API_URL). Keys starting sk-or- are treated as OpenRouter. */
+  llmProvider: (process.env.LLM_PROVIDER ?? "").toLowerCase(),
   llmModel: process.env.LLM_MODEL || undefined,
   llmApiUrl: process.env.LLM_API_URL ?? "",
 
