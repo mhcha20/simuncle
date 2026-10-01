@@ -1313,6 +1313,23 @@ export default function Orders() {
       toast.error(language === "zh-TW" ? "無法重新發起付款" : language === "zh-CN" ? "无法重新发起付款" : language === "ja" ? "支払いを再開できません" : language === "ko" ? "결제를 다시 시작할 수 없습니다" : language === "th" ? "ไม่สามารถเริ่มชำระเงินใหม่" : "Unable to restart payment");
     },
   });
+  const retryTopupMutation = trpc.orders.retryTopupCheckout.useMutation({
+    onSuccess: (data) => {
+      if (data.kind === "pay") {
+        window.location.assign(data.url);
+        return;
+      }
+      // Already paid on Stripe: complete it now instead of waiting for the webhook.
+      confirmTopupPayment.mutate({ sessionId: data.sessionId }, {
+        onSettled: () => {
+          utils.orders.getMyTopupOrders.invalidate();
+          utils.orders.getUsage.invalidate();
+          toast.success(t.topup.topupSuccess);
+        },
+      });
+    },
+    onError: (err) => toast.error(err.message),
+  });
   const topupConfirmedRef = useRef(false);
 
   // Batch selection state for pending_payment orders
@@ -1816,6 +1833,19 @@ export default function Orders() {
                             <span className="text-muted-foreground">{t.orders.parentOrderLabel} #{item.parentOrderId}</span>
                           )}
                         </div>
+                        {item.status === "pending_payment" && (
+                          <div className="mt-3">
+                            <Button
+                              size="sm"
+                              className="bg-yellow-500 hover:bg-yellow-600 text-white h-8 text-xs"
+                              disabled={retryTopupMutation.isPending}
+                              onClick={() => retryTopupMutation.mutate({ topupOrderId: item.id, origin: window.location.origin })}
+                            >
+                              {retryTopupMutation.isPending ? <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" /> : <RotateCcw className="w-3.5 h-3.5 mr-1.5" />}
+                              {t.orders.continuePayment}
+                            </Button>
+                          </div>
+                        )}
                         {/* Usage progress bar for completed topups */}
                         {item.status === "completed" && usageData && usagePct !== null && (
                           <div className="mt-3 pt-3 border-t border-border/50">

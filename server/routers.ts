@@ -78,7 +78,7 @@ import {
   combineUsage,
   terminateVizlyncOrder,
 } from "./vizlync";
-import { createCheckoutSession, createTopupCheckoutSession, confirmAndFulfillBySession } from "./stripe";
+import { appendQuery, createCheckoutSession, createTopupCheckoutSession, confirmAndFulfillBySession, resumeTopupCheckout } from "./stripe";
 import { fetchAllTgtProducts, normalizeTgtProduct, createTgtOrder, queryTgtUsage } from "./tgt";
 import { sendOrderConfirmationEmail, sendCustomEmailToCustomer, sendTerminationEmail } from "./email";
 import { articlesRouter } from "./routers/articles";
@@ -849,6 +849,30 @@ const ordersRouter = router({
       return { url: result.url };
     }),
 
+  /** Finish paying for a top-up that was started but not paid (reuses the same top-up order). */
+  retryTopupCheckout: protectedProcedure
+    .input(z.object({ topupOrderId: z.number().int(), origin: z.string().url() }))
+    .mutation(async ({ ctx, input }) => {
+      try {
+        return await resumeTopupCheckout({
+          topupOrderId: input.topupOrderId,
+          userId: ctx.user.id,
+          userEmail: ctx.user.email,
+          userName: ctx.user.name,
+          successUrl: `${input.origin}/orders?topup_success=true`,
+          cancelUrl: `${input.origin}/orders`,
+          preferredLang: "zh-TW",
+          getParentVizlyncOrderId: async (parentOrderId) => (await getOrderById(parentOrderId, ctx.user.id))?.vizlyncOrderId ?? null,
+        });
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        if (message === "NOT_FOUND") throw new TRPCError({ code: "NOT_FOUND", message: "Top-up order not found" });
+        if (message === "NOT_PENDING") throw new TRPCError({ code: "BAD_REQUEST", message: "This top-up is not waiting for payment" });
+        if (message === "PARENT_NOT_READY") throw new TRPCError({ code: "BAD_REQUEST", message: "The main eSIM is not ready for a top-up yet" });
+        throw error;
+      }
+    }),
+
   getMyTopupOrders: protectedProcedure.query(async ({ ctx }) => {
     const topups = await getUserTopupOrders(ctx.user.id);
     if (topups.length === 0) return [];
@@ -1100,7 +1124,7 @@ const ordersRouter = router({
           batch_order_ids: orderIdsStr,
           is_batch: "true",
         },
-        success_url: `${input.successUrl}?batch_order_ids=${encodeURIComponent(orderIdsStr)}`,
+        success_url: appendQuery(input.successUrl, `batch_order_ids=${encodeURIComponent(orderIdsStr)}`),
         cancel_url: input.cancelUrl,
         locale: (input.locale as "zh" | "en" | "ja" | "ko" | "th" | undefined) ?? "zh",
         allow_promotion_codes: true,

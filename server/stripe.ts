@@ -32,6 +32,11 @@ function isSessionModeMismatch(sessionId: string): boolean {
   return false;
 }
 
+/** Add query parameters to a URL that may already have some ("?" vs "&"). */
+export function appendQuery(url: string, query: string): string {
+  return `${url}${url.includes("?") ? "&" : "?"}${query}`;
+}
+
 // ---- Top-up Checkout ----
 export interface CreateTopupCheckoutInput {
   userId?: number | null;
@@ -47,19 +52,11 @@ export interface CreateTopupCheckoutInput {
   cancelUrl: string;
 }
 
-export async function createTopupCheckoutSession(input: CreateTopupCheckoutInput): Promise<{ sessionId: string; url: string }> {
+type TopupSessionParams = CreateTopupCheckoutInput & { topupOrderId: number };
+
+async function buildTopupStripeSession(input: TopupSessionParams) {
   const amountCents = Math.round(input.priceHkd * 100);
-  if (amountCents < 400) throw new Error("Minimum top-up amount is HK$4");
-
-  const topupOrderId = await createTopupOrder({
-    parentOrderId: input.parentOrderId,
-    userId: input.userId ?? null,
-    topupProductId: input.topupProductId,
-    topupProductName: input.topupProductName,
-    priceHkd: input.priceHkd,
-  });
-
-  const session = await stripe.checkout.sessions.create({
+  return stripe.checkout.sessions.create({
     mode: "payment",
     customer_email: input.userEmail ?? undefined,
     line_items: [{
@@ -76,7 +73,7 @@ export async function createTopupCheckoutSession(input: CreateTopupCheckoutInput
     client_reference_id: input.userId?.toString() ?? "guest",
     metadata: {
       topup: "true",
-      topup_order_id: topupOrderId.toString(),
+      topup_order_id: input.topupOrderId.toString(),
       parent_order_id: input.parentOrderId.toString(),
       vizlync_order_id: input.vizlyncOrderId,
       topup_product_id: input.topupProductId,
@@ -86,8 +83,8 @@ export async function createTopupCheckoutSession(input: CreateTopupCheckoutInput
       customer_name: input.userName ?? "",
       preferred_lang: input.preferredLang ?? "zh-TW",
     },
-    success_url: `${input.successUrl}?topup_session_id={CHECKOUT_SESSION_ID}&topup_success=true`,
-    cancel_url: `${input.cancelUrl}?topup_cancelled=true`,
+    success_url: appendQuery(input.successUrl, "topup_session_id={CHECKOUT_SESSION_ID}&topup_success=true"),
+    cancel_url: appendQuery(input.cancelUrl, "topup_cancelled=true"),
     allow_promotion_codes: true,
     custom_text: {
       submit: {
@@ -95,6 +92,21 @@ export async function createTopupCheckoutSession(input: CreateTopupCheckoutInput
       },
     },
   });
+}
+
+export async function createTopupCheckoutSession(input: CreateTopupCheckoutInput): Promise<{ sessionId: string; url: string }> {
+  const amountCents = Math.round(input.priceHkd * 100);
+  if (amountCents < 400) throw new Error("Minimum top-up amount is HK$4");
+
+  const topupOrderId = await createTopupOrder({
+    parentOrderId: input.parentOrderId,
+    userId: input.userId ?? null,
+    topupProductId: input.topupProductId,
+    topupProductName: input.topupProductName,
+    priceHkd: input.priceHkd,
+  });
+
+  const session = await buildTopupStripeSession({ ...input, topupOrderId });
 
   await updateTopupOrderStatus(topupOrderId, "pending_payment", {
     stripeSessionId: session.id,
@@ -102,6 +114,67 @@ export async function createTopupCheckoutSession(input: CreateTopupCheckoutInput
   });
 
   return { sessionId: session.id, url: session.url! };
+}
+
+export type ResumeTopupResult =
+  | { kind: "pay"; url: string }
+  | { kind: "paid"; sessionId: string };
+
+/**
+ * Let a customer finish a top-up they started but did not pay: reuse the open
+ * Stripe page if it is still valid, otherwise open a new one for the SAME
+ * top-up order (no second order, same price). A session that was already paid
+ * is reported so the caller can complete it immediately.
+ */
+export async function resumeTopupCheckout(input: {
+  topupOrderId: number;
+  userId: number;
+  userEmail?: string | null;
+  userName?: string | null;
+  successUrl: string;
+  cancelUrl: string;
+  preferredLang?: string;
+  getParentVizlyncOrderId: (parentOrderId: number) => Promise<string | null>;
+}): Promise<ResumeTopupResult> {
+  const topup = await getTopupOrderById(input.topupOrderId);
+  if (!topup || topup.userId !== input.userId) throw new Error("NOT_FOUND");
+  if (topup.status !== "pending_payment") throw new Error("NOT_PENDING");
+
+  if (topup.stripeSessionId && !isSessionModeMismatch(topup.stripeSessionId)) {
+    try {
+      const existing = await stripe.checkout.sessions.retrieve(topup.stripeSessionId);
+      if (existing.payment_status === "paid") return { kind: "paid", sessionId: existing.id };
+      if (existing.status === "open" && existing.url) return { kind: "pay", url: existing.url };
+    } catch (error) {
+      console.warn("[Stripe] Could not reuse top-up session, creating a new one:", error instanceof Error ? error.message : error);
+    }
+  }
+
+  const vizlyncOrderId = await input.getParentVizlyncOrderId(topup.parentOrderId);
+  if (!vizlyncOrderId) throw new Error("PARENT_NOT_READY");
+
+  const priceHkd = Math.round(parseFloat(String(topup.priceHkd ?? 0)));
+  if (Math.round(priceHkd * 100) < 400) throw new Error("Minimum top-up amount is HK$4");
+
+  const session = await buildTopupStripeSession({
+    topupOrderId: topup.id,
+    userId: input.userId,
+    userEmail: input.userEmail,
+    userName: input.userName,
+    parentOrderId: topup.parentOrderId,
+    vizlyncOrderId,
+    topupProductId: topup.topupProductId,
+    topupProductName: topup.topupProductName ?? "Top-up",
+    priceHkd,
+    preferredLang: input.preferredLang,
+    successUrl: input.successUrl,
+    cancelUrl: input.cancelUrl,
+  });
+  await updateTopupOrderStatus(topup.id, "pending_payment", {
+    stripeSessionId: session.id,
+    stripePaymentIntentId: session.payment_intent as string | undefined,
+  });
+  return { kind: "pay", url: session.url! };
 }
 
 export interface CreateCheckoutInput {
@@ -194,8 +267,8 @@ export async function createCheckoutSession(input: CreateCheckoutInput): Promise
       referral_code_id: input.referralCodeId?.toString() ?? "",
       start_date: input.startDate ?? "", // for ACTIVATE_ON_ORDER TGT products
     },
-    success_url: `${input.successUrl}?session_id={CHECKOUT_SESSION_ID}&success=true`,
-    cancel_url: `${input.cancelUrl}?cancelled=true`,
+    success_url: appendQuery(input.successUrl, "session_id={CHECKOUT_SESSION_ID}&success=true"),
+    cancel_url: appendQuery(input.cancelUrl, "cancelled=true"),
     allow_promotion_codes: true,
     // Collect billing email for guest checkout (when no customer_email is prefilled)
     billing_address_collection: "auto",
