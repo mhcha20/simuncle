@@ -278,13 +278,20 @@ const productsRouter = router({
           }
         });
       }
+      // Take products Vizlync no longer lists off sale (only after a clean run).
+      let removed = 0;
+      if (errors.length === 0) {
+        const { deactivateMissingVizlyncProducts } = await import("./db");
+        const result = await deactivateMissingVizlyncProducts(products.map((p) => p.productId)).catch(() => ({ deactivated: 0 }));
+        removed = result.deactivated;
+      }
       // Record sync history
       await insertSyncHistory({
         triggeredBy: "manual",
         status: errors.length === 0 ? "success" : "failed",
         totalProducts: products.length,
-        added: 0, // manual sync doesn't track added/removed
-        removed: 0,
+        added: 0, // manual sync doesn't track added
+        removed,
         priceChanged: 0,
         failedCount: errors.length,
         errorMessage: errors.length > 0 ? errors.slice(0, 5).map(e => `[${e.productId}] ${e.error}`).join("\n") : null,

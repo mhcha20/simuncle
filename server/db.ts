@@ -531,6 +531,47 @@ export async function deactivateMissingTgtProducts(validTgtProductIds: string[])
   return toDeactivate.length;
 }
 
+/**
+ * Deactivate active Vizlync products that the latest full API fetch no longer lists.
+ * Safety valve: if the fetch returned fewer than `minRatio` of the currently active products
+ * (e.g. the API returned a partial list), nothing is deactivated.
+ */
+export async function deactivateMissingVizlyncProducts(
+  validProductIds: string[],
+  minRatio = 0.9,
+): Promise<{ deactivated: number; skippedReason?: string }> {
+  const db = await getDb();
+  if (!db) return { deactivated: 0, skippedReason: "database unavailable" };
+  if (validProductIds.length === 0) return { deactivated: 0, skippedReason: "empty product list" };
+
+  const activeRows = await db
+    .select({ productId: productsCache.productId })
+    .from(productsCache)
+    .where(and(eq(productsCache.supplier, "vizlync"), eq(productsCache.isActive, true)));
+
+  const validSet = new Set(validProductIds);
+  const toDeactivate = activeRows.map((r) => r.productId).filter((id) => !validSet.has(id));
+  if (toDeactivate.length === 0) return { deactivated: 0 };
+
+  if (validProductIds.length < activeRows.length * minRatio) {
+    return {
+      deactivated: 0,
+      skippedReason: `API returned ${validProductIds.length} products but ${activeRows.length} are active (below ${Math.round(minRatio * 100)}%), looks partial`,
+    };
+  }
+
+  const { inArray } = await import("drizzle-orm");
+  const chunkSize = 500;
+  for (let i = 0; i < toDeactivate.length; i += chunkSize) {
+    await db
+      .update(productsCache)
+      .set({ isActive: false, updatedAt: new Date() })
+      .where(inArray(productsCache.productId, toDeactivate.slice(i, i + chunkSize)));
+  }
+  console.log(`[deactivateMissingVizlyncProducts] Deactivated ${toDeactivate.length} products.`);
+  return { deactivated: toDeactivate.length };
+}
+
 // ---- Admin Product Management ----
 export async function adminListProducts(params: {
   search?: string;

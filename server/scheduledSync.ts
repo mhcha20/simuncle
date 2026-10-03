@@ -1,7 +1,7 @@
 import type { Request, Response } from "express";
 import { sdk } from "./_core/sdk";
 import { fetchAllProducts } from "./vizlync";
-import { upsertProduct, getDb, insertSyncHistory } from "./db";
+import { upsertProduct, getDb, insertSyncHistory, deactivateMissingVizlyncProducts } from "./db";
 import { notifyOwner } from "./_core/notification";
 import { productsCache } from "../drizzle/schema";
 import { submitAllPages } from "./indexnow";
@@ -115,6 +115,17 @@ async function runSync() {
       return Math.round(oldPrice * 100) !== Math.round(Number(p.price) * 100);
     });
 
+    // Stop selling products Vizlync no longer lists (orders for them would fail at the supplier).
+    let deactivated = 0;
+    try {
+      const result = await deactivateMissingVizlyncProducts(products.map((p) => p.productId));
+      deactivated = result.deactivated;
+      if (result.skippedReason) console.warn(`[ScheduledSync] Skipped deactivating missing products: ${result.skippedReason}`);
+      else if (deactivated > 0) console.log(`[ScheduledSync] Deactivated ${deactivated} products no longer in the Vizlync API.`);
+    } catch (deactivateErr) {
+      console.error("[ScheduledSync] Failed to deactivate missing products:", deactivateErr);
+    }
+
     const hasChanges = added.length > 0 || removedIds.length > 0 || priceChanged.length > 0;
 
     if (hasChanges) {
@@ -140,7 +151,7 @@ async function runSync() {
 
       const parts: string[] = [`📦 Total: ${total} products (synced in ${elapsed}s)`];
       if (added.length > 0) parts.push(`✅ +${added.length} new  [${groupByRegion(added)}]`);
-      if (removedIds.length > 0) parts.push(`❌ -${removedIds.length} removed`);
+      if (removedIds.length > 0) parts.push(`❌ -${removedIds.length} no longer listed by Vizlync${deactivated > 0 ? ` (${deactivated} newly taken off sale)` : ""}`);
       if (priceChanged.length > 0) {
         const top5 = priceChanged
           .sort((a, b) => {
