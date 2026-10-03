@@ -4,6 +4,7 @@ import { getDb } from "./db";
 import { articles } from "../drizzle/schema";
 import { eq } from "drizzle-orm";
 import { invokeLLM } from "./_core/llm";
+import { translateArticleToLanguages } from "./articleTranslation";
 import { notifyOwner } from "./_core/notification";
 import { submitToIndexNow, SITE_HOST } from "./indexnow";
 
@@ -101,130 +102,16 @@ Return JSON with a single "category" field.`,
   }
 }
 
-const LANG_NAMES: Record<string, string> = {
-  "zh-CN": "Simplified Chinese (简体中文)",
-  en: "English",
-  ja: "Japanese (日本語)",
-  ko: "Korean (한국어)",
-  th: "Thai (ภาษาไทย)",
-};
-
-
-/** Ask the model for a JSON object, retrying when the reply is empty or not valid JSON. */
-async function invokeJson<T>(params: Parameters<typeof invokeLLM>[0], label: string, attempts = 3): Promise<T> {
-  let lastError: unknown;
-  for (let attempt = 1; attempt <= attempts; attempt++) {
-    try {
-      const response = await invokeLLM(params);
-      const raw = response.choices[0]?.message?.content;
-      if (typeof raw !== "string") return raw as unknown as T;
-      const text = raw.replace(/^\s*```(?:json)?\s*/i, "").replace(/\s*```\s*$/, "").trim();
-      if (!text) throw new Error("empty reply from the model");
-      return JSON.parse(text) as T;
-    } catch (error) {
-      lastError = error;
-      console.warn(`[SoroSync] ${label}: attempt ${attempt}/${attempts} failed: ${error instanceof Error ? error.message : error}`);
-      if (attempt < attempts) await new Promise(resolve => setTimeout(resolve, 1500 * attempt));
-    }
-  }
-  throw lastError;
-}
-
-/**
- * Translate title and excerpt for a single language.
- */
-async function translateMeta(
-  title: string,
-  excerpt: string,
-  langName: string
-): Promise<{ title: string; excerpt: string }> {
-  return invokeJson<{ title: string; excerpt: string }>({
-    messages: [{
-      role: "user",
-      content: `Translate from Traditional Chinese to ${langName}. Return JSON with "title" and "excerpt" fields only.
-Title: ${title}
-Excerpt: ${excerpt}`,
-    }],
-    response_format: {
-      type: "json_schema",
-      json_schema: {
-        name: "meta",
-        strict: true,
-        schema: {
-          type: "object",
-          properties: {
-            title: { type: "string" },
-            excerpt: { type: "string" },
-          },
-          required: ["title", "excerpt"],
-          additionalProperties: false,
-        },
-      },
-    },
-  }, `meta (${langName})`);
-}
-
-/**
- * Translate HTML content for a single language, chunked to avoid truncation.
- */
-async function translateContent(content: string, langName: string): Promise<string> {
-  const CHUNK = 1200; // Smaller chunks to avoid JSON truncation for Thai/Korean
-  const chunks: string[] = [];
-  for (let i = 0; i < content.length; i += CHUNK) {
-    chunks.push(content.substring(i, i + CHUNK));
-  }
-
-  const translated: string[] = [];
-  for (const chunk of chunks) {
-    const parsed = await invokeJson<{ content: string }>({
-      messages: [{
-        role: "user",
-        content: `Translate the following HTML content from Traditional Chinese to ${langName}.
-Preserve ALL HTML tags exactly as-is. Return JSON with a single "content" field.
-HTML: ${chunk}`,
-      }],
-      response_format: {
-        type: "json_schema",
-        json_schema: {
-          name: "content_translation",
-          strict: true,
-          schema: {
-            type: "object",
-            properties: { content: { type: "string" } },
-            required: ["content"],
-            additionalProperties: false,
-          },
-        },
-      },
-    }, `content (${langName})`);
-    translated.push(parsed.content || "");
-  }
-  return translated.join("");
-}
-
-/**
- * Translate an article to all 5 target languages using per-language calls.
- * Returns a map of langCode → { title, excerpt, content }.
- */
+/** Translate a Soro article (Traditional Chinese) into the other five languages. */
 async function translateArticle(
   title: string,
   excerpt: string,
   content: string
 ): Promise<Record<string, { title: string; excerpt: string; content: string }>> {
-  const targetLangs = Object.keys(LANG_NAMES);
+  const translated = await translateArticleToLanguages({ title, excerpt, content }, "zh-TW", ["zh-CN", "en", "ja", "ko", "th"]);
   const result: Record<string, { title: string; excerpt: string; content: string }> = {};
-
-  for (const lang of targetLangs) {
-    try {
-      const [meta, translatedContent] = await Promise.all([
-        translateMeta(title, excerpt, LANG_NAMES[lang]),
-        translateContent(content, LANG_NAMES[lang]),
-      ]);
-      result[lang] = { title: meta.title, excerpt: meta.excerpt, content: translatedContent };
-    } catch (err) {
-      console.error(`[SoroSync] Translation failed for ${lang}:`, err);
-      result[lang] = { title: "", excerpt: "", content: "" };
-    }
+  for (const [lang, fields] of Object.entries(translated)) {
+    result[lang] = fields ?? { title: "", excerpt: "", content: "" };
   }
   return result;
 }

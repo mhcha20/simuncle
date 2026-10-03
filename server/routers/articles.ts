@@ -4,6 +4,7 @@ import { getDb } from "../db";
 import { articles } from "../../drizzle/schema";
 import { eq, desc, and } from "drizzle-orm";
 import { invokeLLM } from "../_core/llm";
+import { translateArticleToLanguages } from "../articleTranslation";
 import { TRPCError } from "@trpc/server";
 import { submitToIndexNow, SITE_HOST } from "../indexnow";
 
@@ -397,63 +398,20 @@ export const articlesRouter = router({
       }
 
       const targetLangs = ["zh-TW", "zh-CN", "en", "ja", "ko", "th"].filter((l) => l !== input.sourceLang);
-      const langNames: Record<string, string> = {
-        "zh-TW": "Traditional Chinese (繁體中文)",
-        "zh-CN": "Simplified Chinese (简体中文)",
-        en: "English",
-        ja: "Japanese (日本語)",
-        ko: "Korean (한국어)",
-        th: "Thai (ภาษาไทย)",
-      };
-
-      const prompt = `You are a professional translator specializing in travel and technology content.
-Translate the following article from ${langNames[input.sourceLang]} to all target languages.
-Return a JSON object with keys: "zh-TW", "zh-CN", "en", "ja", "ko", "th" (excluding the source language "${input.sourceLang}").
-Each value should be an object with "title", "excerpt", and "content" fields.
-Preserve any HTML tags in the content field exactly as-is.
-Keep the tone natural and appropriate for each language's culture.
-
-Source article:
-Title: ${source.title || ""}
-Excerpt: ${source.excerpt || ""}
-Content: ${source.content || ""}
-
-Target languages: ${targetLangs.map((l) => langNames[l]).join(", ")}`;
-
-      const response = await invokeLLM({
-        messages: [{ role: "user", content: prompt }],
-        response_format: {
-          type: "json_schema",
-          json_schema: {
-            name: "translations",
-            strict: false,
-            schema: {
-              type: "object",
-              properties: Object.fromEntries(
-                targetLangs.map((lang) => [
-                  lang,
-                  {
-                    type: "object",
-                    properties: {
-                      title: { type: "string" },
-                      excerpt: { type: "string" },
-                      content: { type: "string" },
-                    },
-                    required: ["title", "excerpt", "content"],
-                  },
-                ])
-              ),
-            },
-          },
-        },
-      });
-
-      const raw = response.choices[0].message.content;
-      let translations: Record<string, { title: string; excerpt: string; content: string }>;
-      try {
-        translations = typeof raw === "string" ? JSON.parse(raw) : raw;
-      } catch {
-        throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Failed to parse AI translation response" });
+      const translated = await translateArticleToLanguages(
+        { title: source.title || "", excerpt: source.excerpt || "", content: source.content || "" },
+        input.sourceLang,
+        targetLangs,
+      );
+      const translations: Record<string, { title: string; excerpt: string; content: string }> = {};
+      const failedLanguages: string[] = [];
+      for (const lang of targetLangs) {
+        const t = translated[lang];
+        if (t) translations[lang] = t;
+        else failedLanguages.push(lang);
+      }
+      if (Object.keys(translations).length === 0) {
+        throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "AI translation failed for every language, please try again" });
       }
 
       // Build update object
@@ -489,6 +447,6 @@ Target languages: ${targetLangs.map((l) => langNames[l]).join(", ")}`;
       }
 
       await db.update(articles).set(updateData).where(eq(articles.id, input.id));
-      return { success: true, translatedLanguages: targetLangs };
+      return { success: true, translatedLanguages: targetLangs.filter((l) => !failedLanguages.includes(l)), failedLanguages };
     }),
 });
