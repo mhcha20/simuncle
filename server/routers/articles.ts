@@ -373,6 +373,8 @@ export const articlesRouter = router({
       z.object({
         id: z.number(),
         sourceLang: z.enum(["zh-TW", "zh-CN", "en", "ja", "ko", "th"]),
+        // Translate just one language (the admin page calls this once per language so each request stays short).
+        targetLang: z.enum(["zh-TW", "zh-CN", "en", "ja", "ko", "th"]).optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {
@@ -397,7 +399,9 @@ export const articlesRouter = router({
         throw new TRPCError({ code: "BAD_REQUEST", message: "Source language has no content to translate" });
       }
 
-      const targetLangs = ["zh-TW", "zh-CN", "en", "ja", "ko", "th"].filter((l) => l !== input.sourceLang);
+      const targetLangs = ["zh-TW", "zh-CN", "en", "ja", "ko", "th"].filter(
+        (l) => l !== input.sourceLang && (!input.targetLang || l === input.targetLang),
+      );
       const translated = await translateArticleToLanguages(
         { title: source.title || "", excerpt: source.excerpt || "", content: source.content || "" },
         input.sourceLang,

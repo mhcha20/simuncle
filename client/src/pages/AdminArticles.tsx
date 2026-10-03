@@ -170,44 +170,43 @@ export default function AdminArticles() {
     onError: (e) => toast.error(`批量分類失敗：${e.message}`),
   });
 
-  const translateMutation = trpc.articles.aiTranslate.useMutation({
-    onSuccess: (data) => {
-      toast.success(`AI 翻譯完成！已翻譯 ${data.translatedLanguages.length} 種語言`);
-      utils.articles.adminList.invalidate();
-      // Refresh the form with new translations
-      if (form.id) {
-        utils.articles.adminGet.fetch({ id: form.id }).then((updated) => {
-          if (updated) {
-            setForm({
-              id: updated.id,
-              slug: updated.slug,
-              coverImage: updated.coverImage ?? "",
-              status: updated.status,
-              titleZhTW: updated.titleZhTW ?? "",
-              excerptZhTW: updated.excerptZhTW ?? "",
-              contentZhTW: updated.contentZhTW ?? "",
-              titleZhCN: updated.titleZhCN ?? "",
-              excerptZhCN: updated.excerptZhCN ?? "",
-              contentZhCN: updated.contentZhCN ?? "",
-              titleEn: updated.titleEn ?? "",
-              excerptEn: updated.excerptEn ?? "",
-              contentEn: updated.contentEn ?? "",
-              titleJa: updated.titleJa ?? "",
-              excerptJa: updated.excerptJa ?? "",
-              contentJa: updated.contentJa ?? "",
-              titleKo: updated.titleKo ?? "",
-              excerptKo: updated.excerptKo ?? "",
-              contentKo: updated.contentKo ?? "",
-              titleTh: updated.titleTh ?? "",
-              excerptTh: updated.excerptTh ?? "",
-              contentTh: updated.contentTh ?? "",
-            });
-          }
-        });
-      }
-    },
-    onError: (e) => toast.error(`翻譯失敗：${e.message}`),
-  });
+  const translateMutation = trpc.articles.aiTranslate.useMutation();
+  const [translateProgress, setTranslateProgress] = useState<string | null>(null);
+
+  // Load the saved translations back into the form.
+  const refreshFormFromServer = () => {
+    utils.articles.adminList.invalidate();
+    if (form.id) {
+      utils.articles.adminGet.fetch({ id: form.id }).then((updated) => {
+        if (updated) {
+          setForm({
+            id: updated.id,
+            slug: updated.slug,
+            coverImage: updated.coverImage ?? "",
+            status: updated.status,
+            titleZhTW: updated.titleZhTW ?? "",
+            excerptZhTW: updated.excerptZhTW ?? "",
+            contentZhTW: updated.contentZhTW ?? "",
+            titleZhCN: updated.titleZhCN ?? "",
+            excerptZhCN: updated.excerptZhCN ?? "",
+            contentZhCN: updated.contentZhCN ?? "",
+            titleEn: updated.titleEn ?? "",
+            excerptEn: updated.excerptEn ?? "",
+            contentEn: updated.contentEn ?? "",
+            titleJa: updated.titleJa ?? "",
+            excerptJa: updated.excerptJa ?? "",
+            contentJa: updated.contentJa ?? "",
+            titleKo: updated.titleKo ?? "",
+            excerptKo: updated.excerptKo ?? "",
+            contentKo: updated.contentKo ?? "",
+            titleTh: updated.titleTh ?? "",
+            excerptTh: updated.excerptTh ?? "",
+            contentTh: updated.contentTh ?? "",
+          });
+        }
+      });
+    }
+  };
 
   if (!user || user.role !== "admin") {
     return (
@@ -253,7 +252,7 @@ export default function AdminArticles() {
     }
   };
 
-  const handleTranslate = () => {
+  const handleTranslate = async () => {
     if (!form.id) {
       toast.error("請先儲存文章後再翻譯");
       return;
@@ -263,7 +262,22 @@ export default function AdminArticles() {
       toast.error(`${LANGS.find(l => l.key === translateSource)?.label} 尚無內容可翻譯`);
       return;
     }
-    translateMutation.mutate({ id: form.id, sourceLang: translateSource });
+    // One request per language: a long article takes a while and one long request can be cut by the browser or proxy.
+    const targets = LANGS.map((l) => l.key).filter((k) => k !== translateSource);
+    const failed: string[] = [];
+    for (let i = 0; i < targets.length; i++) {
+      const label = LANGS.find((l) => l.key === targets[i])?.label ?? targets[i];
+      setTranslateProgress(`${i + 1}/${targets.length} ${label}`);
+      try {
+        await translateMutation.mutateAsync({ id: form.id, sourceLang: translateSource, targetLang: targets[i] });
+        refreshFormFromServer();
+      } catch {
+        failed.push(label);
+      }
+    }
+    setTranslateProgress(null);
+    if (failed.length === 0) toast.success("AI 翻譯完成！已翻譯 5 種語言");
+    else toast.error(`以下語言翻譯失敗，請再撳一次：${failed.join("、")}`);
   };
 
   const currentLangFields = getLangFields(form, activeLang);
@@ -453,11 +467,11 @@ export default function AdminArticles() {
                 <Button
                   variant="outline"
                   onClick={handleTranslate}
-                  disabled={translateMutation.isPending || !form.id}
+                  disabled={translateMutation.isPending || !!translateProgress || !form.id}
                   className="gap-2"
                 >
-                  {translateMutation.isPending ? (
-                    <><Loader2 className="w-4 h-4 animate-spin" />翻譯中...</>
+                  {translateMutation.isPending || translateProgress ? (
+                    <><Loader2 className="w-4 h-4 animate-spin" />翻譯中{translateProgress ? ` ${translateProgress}` : "..."}</>
                   ) : (
                     <><Globe className="w-4 h-4" />翻譯到所有語言</>
                   )}
