@@ -103,6 +103,20 @@ function setLangFields(form: ArticleForm, lang: Lang, fields: { title: string; e
   return { ...form, ...updates };
 }
 
+// Admin times are shown in Hong Kong time, whatever the browser's time zone is.
+function formatHkTime(value: Date | string | null | undefined): string {
+  if (!value) return "-";
+  return new Date(value).toLocaleString("zh-HK", {
+    timeZone: "Asia/Hong_Kong",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  });
+}
+
 export default function AdminArticles() {
   const [, navigate] = useLocation();
   const { user } = useAuth();
@@ -329,6 +343,12 @@ export default function AdminArticles() {
                       {article.excerptZhTW && (
                         <p className="text-sm text-muted-foreground line-clamp-1 mt-0.5">{article.excerptZhTW}</p>
                       )}
+                      <p className="text-xs text-muted-foreground mt-1">
+                        {article.status === "published" && article.publishedAt
+                          ? `發佈：${formatHkTime(article.publishedAt)}`
+                          : "尚未發佈"}
+                        {" · "}更新：{formatHkTime(article.updatedAt)}
+                      </p>
                       <div className="flex items-center gap-1 mt-2 flex-wrap">
                         {LANGS.map((l) => {
                           const hasContent = !!(
