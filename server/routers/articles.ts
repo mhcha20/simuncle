@@ -5,12 +5,26 @@ import { articles } from "../../drizzle/schema";
 import { eq, desc, and } from "drizzle-orm";
 import { invokeLLM } from "../_core/llm";
 import { translateArticleToLanguages } from "../articleTranslation";
+import { getTranslateJob, startTranslateJob } from "../articleTranslateJobs";
 import { TRPCError } from "@trpc/server";
 import { submitToIndexNow, SITE_HOST } from "../indexnow";
 
 // Helper: check admin
 function requireAdmin(role: string | undefined) {
   if (role !== "admin") throw new TRPCError({ code: "FORBIDDEN" });
+}
+
+// Column values for one language's translation.
+function translationColumns(lang: string, t: { title: string; excerpt: string; content: string }): Partial<typeof articles.$inferInsert> {
+  switch (lang) {
+    case "zh-TW": return { titleZhTW: t.title, excerptZhTW: t.excerpt, contentZhTW: t.content };
+    case "zh-CN": return { titleZhCN: t.title, excerptZhCN: t.excerpt, contentZhCN: t.content };
+    case "en": return { titleEn: t.title, excerptEn: t.excerpt, contentEn: t.content };
+    case "ja": return { titleJa: t.title, excerptJa: t.excerpt, contentJa: t.content };
+    case "ko": return { titleKo: t.title, excerptKo: t.excerpt, contentKo: t.content };
+    case "th": return { titleTh: t.title, excerptTh: t.excerpt, contentTh: t.content };
+    default: return {};
+  }
 }
 
 // Helper: slugify
@@ -422,35 +436,53 @@ export const articlesRouter = router({
       const updateData: Partial<typeof articles.$inferInsert> = {};
       for (const lang of targetLangs) {
         const t = translations[lang];
-        if (!t) continue;
-        if (lang === "zh-TW") {
-          updateData.titleZhTW = t.title;
-          updateData.excerptZhTW = t.excerpt;
-          updateData.contentZhTW = t.content;
-        } else if (lang === "zh-CN") {
-          updateData.titleZhCN = t.title;
-          updateData.excerptZhCN = t.excerpt;
-          updateData.contentZhCN = t.content;
-        } else if (lang === "en") {
-          updateData.titleEn = t.title;
-          updateData.excerptEn = t.excerpt;
-          updateData.contentEn = t.content;
-        } else if (lang === "ja") {
-          updateData.titleJa = t.title;
-          updateData.excerptJa = t.excerpt;
-          updateData.contentJa = t.content;
-        } else if (lang === "ko") {
-          updateData.titleKo = t.title;
-          updateData.excerptKo = t.excerpt;
-          updateData.contentKo = t.content;
-        } else if (lang === "th") {
-          updateData.titleTh = t.title;
-          updateData.excerptTh = t.excerpt;
-          updateData.contentTh = t.content;
-        }
+        if (t) Object.assign(updateData, translationColumns(lang, t));
       }
 
       await db.update(articles).set(updateData).where(eq(articles.id, input.id));
       return { success: true, translatedLanguages: targetLangs.filter((l) => !failedLanguages.includes(l)), failedLanguages };
+    }),
+
+  // Admin: start translating an article in the background (keeps running if the browser goes away).
+  aiTranslateStart: protectedProcedure
+    .input(z.object({ id: z.number(), sourceLang: z.enum(["zh-TW", "zh-CN", "en", "ja", "ko", "th"]) }))
+    .mutation(async ({ ctx, input }) => {
+      requireAdmin(ctx.user.role);
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+      const [article] = await db.select().from(articles).where(eq(articles.id, input.id));
+      if (!article) throw new TRPCError({ code: "NOT_FOUND" });
+
+      const sources: Record<string, { title: string | null; excerpt: string | null; content: string | null }> = {
+        "zh-TW": { title: article.titleZhTW, excerpt: article.excerptZhTW, content: article.contentZhTW },
+        "zh-CN": { title: article.titleZhCN, excerpt: article.excerptZhCN, content: article.contentZhCN },
+        en: { title: article.titleEn, excerpt: article.excerptEn, content: article.contentEn },
+        ja: { title: article.titleJa, excerpt: article.excerptJa, content: article.contentJa },
+        ko: { title: article.titleKo, excerpt: article.excerptKo, content: article.contentKo },
+        th: { title: article.titleTh, excerpt: article.excerptTh, content: article.contentTh },
+      };
+      const source = sources[input.sourceLang];
+      if (!source.title && !source.content) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "Source language has no content to translate" });
+      }
+      const targetLangs = ["zh-TW", "zh-CN", "en", "ja", "ko", "th"].filter((l) => l !== input.sourceLang);
+      const { started } = startTranslateJob({
+        articleId: input.id,
+        source: { title: source.title || "", excerpt: source.excerpt || "", content: source.content || "" },
+        sourceLang: input.sourceLang,
+        targetLangs,
+        save: async (lang, fields) => {
+          await db.update(articles).set(translationColumns(lang, fields)).where(eq(articles.id, input.id));
+        },
+      });
+      return { started, total: targetLangs.length };
+    }),
+
+  // Admin: progress of the background translation of an article.
+  aiTranslateStatus: protectedProcedure
+    .input(z.object({ id: z.number() }))
+    .query(async ({ ctx, input }) => {
+      requireAdmin(ctx.user.role);
+      return getTranslateJob(input.id);
     }),
 });

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
@@ -42,6 +42,8 @@ const LANGS: { key: Lang; label: string; flag: string }[] = [
   { key: "ko", label: "한국어", flag: "🇰🇷" },
   { key: "th", label: "ภาษาไทย", flag: "🇹🇭" },
 ];
+
+const langLabel = (key: string) => LANGS.find((l) => l.key === key)?.label ?? key;
 
 type ArticleForm = {
   id?: number;
@@ -170,8 +172,19 @@ export default function AdminArticles() {
     onError: (e) => toast.error(`批量分類失敗：${e.message}`),
   });
 
-  const translateMutation = trpc.articles.aiTranslate.useMutation();
-  const [translateProgress, setTranslateProgress] = useState<string | null>(null);
+  // Translation runs on the server; this page only starts it and shows its progress.
+  const startTranslateMutation = trpc.articles.aiTranslateStart.useMutation();
+  const translateStatusQuery = trpc.articles.aiTranslateStatus.useQuery(
+    { id: form.id ?? 0 },
+    {
+      enabled: showForm && !!form.id,
+      refetchInterval: (query) => (query.state.data?.state === "running" ? 3000 : false),
+    },
+  );
+  const translateJob = translateStatusQuery.data ?? null;
+  const translating = translateJob?.state === "running";
+  const lastCompletedCount = useRef(0);
+  const wasRunning = useRef(false);
 
   // Load the saved translations back into the form.
   const refreshFormFromServer = () => {
@@ -207,6 +220,27 @@ export default function AdminArticles() {
       });
     }
   };
+
+  // Show each finished language as it is saved, and announce the end of a run that was watched.
+  useEffect(() => {
+    if (!translateJob) {
+      lastCompletedCount.current = 0;
+      wasRunning.current = false;
+      return;
+    }
+    if (translateJob.completed.length !== lastCompletedCount.current) {
+      lastCompletedCount.current = translateJob.completed.length;
+      refreshFormFromServer();
+    }
+    if (translateJob.state === "running") {
+      wasRunning.current = true;
+    } else if (wasRunning.current) {
+      wasRunning.current = false;
+      if (translateJob.failed.length === 0) toast.success(`AI 翻譯完成！已翻譯 ${translateJob.completed.length} 種語言`);
+      else toast.error(`以下語言翻譯失敗，請再撳一次：${translateJob.failed.map(langLabel).join("、")}`);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [translateJob?.state, translateJob?.completed.length, translateJob?.failed.length]);
 
   if (!user || user.role !== "admin") {
     return (
@@ -252,7 +286,7 @@ export default function AdminArticles() {
     }
   };
 
-  const handleTranslate = async () => {
+  const handleTranslate = () => {
     if (!form.id) {
       toast.error("請先儲存文章後再翻譯");
       return;
@@ -262,22 +296,17 @@ export default function AdminArticles() {
       toast.error(`${LANGS.find(l => l.key === translateSource)?.label} 尚無內容可翻譯`);
       return;
     }
-    // One request per language: a long article takes a while and one long request can be cut by the browser or proxy.
-    const targets = LANGS.map((l) => l.key).filter((k) => k !== translateSource);
-    const failed: string[] = [];
-    for (let i = 0; i < targets.length; i++) {
-      const label = LANGS.find((l) => l.key === targets[i])?.label ?? targets[i];
-      setTranslateProgress(`${i + 1}/${targets.length} ${label}`);
-      try {
-        await translateMutation.mutateAsync({ id: form.id, sourceLang: translateSource, targetLang: targets[i] });
-        refreshFormFromServer();
-      } catch {
-        failed.push(label);
-      }
-    }
-    setTranslateProgress(null);
-    if (failed.length === 0) toast.success("AI 翻譯完成！已翻譯 5 種語言");
-    else toast.error(`以下語言翻譯失敗，請再撳一次：${failed.join("、")}`);
+    startTranslateMutation.mutate(
+      { id: form.id, sourceLang: translateSource },
+      {
+        onSuccess: (result) => {
+          if (!result.started) toast.info("呢篇文章正在翻譯中，請等待完成");
+          else toast.info("已交畀伺服器翻譯，可以離開畫面，稍後返嚟睇結果");
+          translateStatusQuery.refetch();
+        },
+        onError: (e) => toast.error(`翻譯失敗：${e.message}`),
+      },
+    );
   };
 
   const currentLangFields = getLangFields(form, activeLang);
@@ -467,11 +496,11 @@ export default function AdminArticles() {
                 <Button
                   variant="outline"
                   onClick={handleTranslate}
-                  disabled={translateMutation.isPending || !!translateProgress || !form.id}
+                  disabled={startTranslateMutation.isPending || translating || !form.id}
                   className="gap-2"
                 >
-                  {translateMutation.isPending || translateProgress ? (
-                    <><Loader2 className="w-4 h-4 animate-spin" />翻譯中{translateProgress ? ` ${translateProgress}` : "..."}</>
+                  {startTranslateMutation.isPending || translating ? (
+                    <><Loader2 className="w-4 h-4 animate-spin" />翻譯中{translateJob ? ` ${translateJob.completed.length + translateJob.failed.length}/${translateJob.total}` : "..."}</>
                   ) : (
                     <><Globe className="w-4 h-4" />翻譯到所有語言</>
                   )}
