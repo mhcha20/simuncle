@@ -307,8 +307,10 @@ const productsRouter = router({
   }),
 
   // Get recent sync history (admin only)
+  // Last few runs of each supplier, so one supplier's runs never push the other's out of the list.
   getSyncHistory: adminProcedure.query(async () => {
-    return getRecentSyncHistory(5);
+    const [vizlync, tgt] = await Promise.all([getRecentSyncHistory(4, "vizlync"), getRecentSyncHistory(4, "tgt")]);
+    return [...vizlync, ...tgt].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
   }),
 
   // Sync products from TGT API (admin only)

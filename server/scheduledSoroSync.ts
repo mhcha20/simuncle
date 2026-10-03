@@ -109,6 +109,27 @@ const LANG_NAMES: Record<string, string> = {
   th: "Thai (ภาษาไทย)",
 };
 
+
+/** Ask the model for a JSON object, retrying when the reply is empty or not valid JSON. */
+async function invokeJson<T>(params: Parameters<typeof invokeLLM>[0], label: string, attempts = 3): Promise<T> {
+  let lastError: unknown;
+  for (let attempt = 1; attempt <= attempts; attempt++) {
+    try {
+      const response = await invokeLLM(params);
+      const raw = response.choices[0]?.message?.content;
+      if (typeof raw !== "string") return raw as unknown as T;
+      const text = raw.replace(/^\s*```(?:json)?\s*/i, "").replace(/\s*```\s*$/, "").trim();
+      if (!text) throw new Error("empty reply from the model");
+      return JSON.parse(text) as T;
+    } catch (error) {
+      lastError = error;
+      console.warn(`[SoroSync] ${label}: attempt ${attempt}/${attempts} failed: ${error instanceof Error ? error.message : error}`);
+      if (attempt < attempts) await new Promise(resolve => setTimeout(resolve, 1500 * attempt));
+    }
+  }
+  throw lastError;
+}
+
 /**
  * Translate title and excerpt for a single language.
  */
@@ -117,7 +138,7 @@ async function translateMeta(
   excerpt: string,
   langName: string
 ): Promise<{ title: string; excerpt: string }> {
-  const response = await invokeLLM({
+  return invokeJson<{ title: string; excerpt: string }>({
     messages: [{
       role: "user",
       content: `Translate from Traditional Chinese to ${langName}. Return JSON with "title" and "excerpt" fields only.
@@ -140,9 +161,7 @@ Excerpt: ${excerpt}`,
         },
       },
     },
-  });
-  const raw = response.choices[0].message.content;
-  return typeof raw === "string" ? JSON.parse(raw) : raw as unknown as { title: string; excerpt: string };
+  }, `meta (${langName})`);
 }
 
 /**
@@ -157,7 +176,7 @@ async function translateContent(content: string, langName: string): Promise<stri
 
   const translated: string[] = [];
   for (const chunk of chunks) {
-    const response = await invokeLLM({
+    const parsed = await invokeJson<{ content: string }>({
       messages: [{
         role: "user",
         content: `Translate the following HTML content from Traditional Chinese to ${langName}.
@@ -177,9 +196,7 @@ HTML: ${chunk}`,
           },
         },
       },
-    });
-    const raw = response.choices[0].message.content;
-    const parsed = typeof raw === "string" ? JSON.parse(raw) : raw as unknown as { content: string };
+    }, `content (${langName})`);
     translated.push(parsed.content || "");
   }
   return translated.join("");

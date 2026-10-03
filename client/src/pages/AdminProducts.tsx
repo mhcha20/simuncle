@@ -135,7 +135,9 @@ export default function AdminProducts() {
   const syncHistoryQuery = trpc.products.getSyncHistory.useQuery(undefined, {
     enabled: isAuthenticated && user?.role === "admin",
   });
-  const lastSync = syncHistoryQuery.data?.[0];
+  const lastSyncs = (["vizlync", "tgt"] as const)
+    .map((supplier) => ({ supplier, row: syncHistoryQuery.data?.find((h) => h.supplier === supplier) }))
+    .filter((x): x is { supplier: "vizlync" | "tgt"; row: NonNullable<typeof x.row> } => !!x.row);
 
   const utils = trpc.useUtils();
 
@@ -461,18 +463,18 @@ export default function AdminProducts() {
           <h1 className="text-2xl font-bold">
             {language === "en" ? "Product Management" : language === "zh-CN" ? "产品管理" : "產品管理"}
           </h1>
-          {lastSync && (
-            <span className="text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
-              {language === "en" ? "Last sync:" : "上次同步："}{" "}
-              {new Date(lastSync.createdAt).toLocaleString()}
-              {lastSync.status === "failed" && (
+          {lastSyncs.map(({ supplier, row }) => (
+            <span key={supplier} className="text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
+              {supplier === "tgt" ? "TGT" : "Vizlync"} {language === "en" ? "last sync:" : "上次同步："}{" "}
+              {new Date(row.createdAt).toLocaleString()}
+              {row.status === "failed" && (
                 <span className="ml-1 text-destructive">· {language === "en" ? "Failed" : "失敗"}</span>
               )}
-              {lastSync.failedCount > 0 && lastSync.status === "success" && (
-                <span className="ml-1 text-amber-600">· {lastSync.failedCount} {language === "en" ? "failed" : "個失敗"}</span>
+              {row.failedCount > 0 && row.status === "success" && (
+                <span className="ml-1 text-amber-600">· {row.failedCount} {language === "en" ? "failed" : "個失敗"}</span>
               )}
             </span>
-          )}
+          ))}
         </div>
         <div className="ml-auto flex items-center gap-2">
           {total > 0 && (

@@ -110,7 +110,9 @@ async function runSync() {
     const priceChanged = products.filter((p) => {
       const oldPrice = existingMap.get(p.productId);
       if (oldPrice === undefined) return false;
-      return Math.abs(oldPrice - Number(p.price)) >= 0.001;
+      // The database keeps 2 decimals, the API can return more; compare at cent precision so
+      // rounding alone does not count as a price change every day.
+      return Math.round(oldPrice * 100) !== Math.round(Number(p.price) * 100);
     });
 
     const hasChanges = added.length > 0 || removedIds.length > 0 || priceChanged.length > 0;

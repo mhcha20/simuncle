@@ -943,6 +943,7 @@ export default function AdminSettings() {
                       )}
                       <div className="flex-1 min-w-0">
                         <span className="text-muted-foreground">
+                          <span className="font-medium">{h.supplier === "tgt" ? "TGT" : "Vizlync"}</span> ·{" "}
                           {new Date(h.createdAt).toLocaleString()} ·{" "}
                           {h.triggeredBy === "manual"
                             ? (language === "en" ? "Manual" : "手動")
