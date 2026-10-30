@@ -17,6 +17,7 @@ Admin → Orders → **終止** (if the eSIM was issued and must stop working) �
 
 ## Scheduled jobs (Railway variable `SCHEDULER_JOBS`)
 Enabled now: `reconcile-orders,email-retry,sync-products,sync-tgt-products,update-exchange-rates,check-tgt-sync-status`.
+Supplier product syncs (`sync-products`, `sync-tgt-products`) and the TGT sync check run weekly on Mondays (09:00 / 09:30 / 11:00 Hong Kong time); run the sync by hand from Admin → Products when needed.
 Optional customer emails (enable one at a time, after the site has run for a few days): `pending-reminder`, `expiry-reminder`, `low-usage-alert`.
 Changing the variable redeploys the service.
 

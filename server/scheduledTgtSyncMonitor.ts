@@ -3,13 +3,14 @@ import { sdk } from "./_core/sdk";
 import { notifyOwner } from "./_core/notification";
 import { getRecentSyncHistory } from "./db";
 
-const STALE_AFTER_MS = 26 * 60 * 60 * 1000;
+// The product syncs run weekly (Mondays), so allow a little over a week.
+const STALE_AFTER_MS = 8 * 24 * 60 * 60 * 1000;
 
 const hkt = (d: Date) => d.toLocaleString("zh-HK", { timeZone: "Asia/Hong_Kong", hour12: false });
 
 /**
- * Daily check that the TGT product sync (sync_history rows with supplier=tgt)
- * ran and succeeded within the last 26 hours; emails the owner a short report.
+ * Weekly check that the TGT product sync (sync_history rows with supplier=tgt)
+ * ran and succeeded within the last 8 days (it runs weekly); emails the owner a short report.
  */
 export async function handleScheduledTgtSyncMonitor(req: Request, res: Response) {
   try {
@@ -36,7 +37,7 @@ export async function runTgtSyncMonitor(now = new Date()) {
     const latest = runs[0];
     const isRecent = latest ? now.getTime() - new Date(latest.createdAt).getTime() <= STALE_AFTER_MS : false;
 
-    const lines: string[] = ["📊 TGT 產品同步每日狀態報告", `報告時間：${hkt(now)} (HKT)`, ""];
+    const lines: string[] = ["📊 TGT 產品同步每週狀態報告", `報告時間：${hkt(now)} (HKT)`, ""];
     let title: string;
 
     if (!latest) {
@@ -55,8 +56,8 @@ export async function runTgtSyncMonitor(now = new Date()) {
         });
       }
       if (!isRecent) {
-        lines.push("", `⚠️ 警告：過去 26 小時內未發現同步記錄，最近一次為 ${hkt(new Date(latest.createdAt))}。`);
-        title = "⚠️ TGT Sync Monitor: 今日同步未執行";
+        lines.push("", `⚠️ 警告：過去 8 日內未發現同步記錄，最近一次為 ${hkt(new Date(latest.createdAt))}。`);
+        title = "⚠️ TGT Sync Monitor: 本週同步未執行";
       } else if (latest.status !== "success") {
         title = "❌ TGT Sync Monitor: 同步失敗";
       } else {
