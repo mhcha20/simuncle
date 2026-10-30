@@ -241,6 +241,11 @@ export async function setupVite(app: Express, server: Server) {
   });
 }
 
+/** True for paths that name a file by extension (images, scripts, fonts...), i.e. never an app route. */
+export function looksLikeStaticFile(url: string): boolean {
+  return /\.(png|jpe?g|gif|webp|avif|svg|ico|bmp|js|mjs|css|map|json|woff2?|ttf|otf|eot|pdf|mp4|webm|mp3|zip)$/i.test(url);
+}
+
 export function serveStatic(app: Express) {
   const distPath =
     process.env.NODE_ENV === "development"
@@ -274,6 +279,10 @@ export function serveStatic(app: Express) {
     const url = req.originalUrl.split("?")[0];
     if (url.endsWith(".xml") || url.endsWith(".txt") || url.startsWith("/api/")) {
       return next();
+    }
+    // A missing file (e.g. /apple-touch-icon.png that Safari probes for) must be a 404, not the HTML shell.
+    if (looksLikeStaticFile(url)) {
+      return res.status(404).type("text/plain").send("Not found");
     }
     const ua = req.headers["user-agent"] ?? "";
     const isCrawler = /facebookexternalhit|Twitterbot|WhatsApp|Slackbot|TelegramBot|LinkedInBot|Discordbot|Googlebot|bingbot|Applebot|curl|python-requests|SERankingBot|AhrefsBot|SemrushBot|MJ12bot/i.test(ua);

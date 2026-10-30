@@ -135,8 +135,8 @@ self.addEventListener('push', (event) => {
   event.waitUntil(
     self.registration.showNotification(payload.title || 'SIM uncle', {
       body: payload.body || '',
-      icon: '/manus-storage/icon-192x192_4bcb6a0b.png',
-      badge: '/manus-storage/icon-72x72_3ab4ed22.png',
+      icon: '/icon-192.png',
+      badge: '/icon-192.png',
       data: { url: payload.url || '/' },
       requireInteraction: false,
     })
