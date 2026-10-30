@@ -3,12 +3,13 @@ import { sdk } from "./_core/sdk";
 import { getDb, getCustomerEmailByUserId, createEmailLog } from "./db";
 import { orders, pushSubscriptions, productsCache } from "../drizzle/schema";
 import { and, eq, or, sql } from "drizzle-orm";
+import { queryTgtOrder, queryTgtUsage } from "./tgt";
 import { getVizlyncUsage, getTopupPlans, extractTopupPlans, computeTopupPriceHkd, parsePlanDataGb } from "./vizlync";
 import { sendPushNotification } from "./push";
 import { sendDataExhaustedEmail, type TopupPlanOption } from "./email";
 
 /**
- * Heartbeat handler: check eSIM data usage for all active orders.
+ * Heartbeat handler: check eSIM data usage for all active orders (Vizlync, and TGT plans that report a cycle total).
  * 1. If remaining data < 20%, send a push notification to the user.
  * 2. If remaining data = 0% (exhausted), send an email notification with topup options.
  * Called by the Manus platform cron every day at UTC 02:00.
@@ -48,33 +49,91 @@ export async function handleScheduledLowUsageAlert(req: Request, res: Response) 
       )
       .limit(200);
 
-    console.log(`[LowUsageAlert] Checking ${activeOrders.length} active orders`);
+    // TGT eSIMs of the last 120 days (older ones have long expired). Their usage comes from the TGT usage API.
+    const tgtOrders = await db
+      .select({
+        id: orders.id,
+        userId: orders.userId,
+        guestEmail: orders.guestEmail,
+        productName: orders.productName,
+        productId: orders.productId,
+        preferredLang: orders.preferredLang,
+        esimData: orders.esimData,
+        supplierOrderId: orders.supplierOrderId,
+      })
+      .from(orders)
+      .where(
+        and(
+          eq(orders.supplier, "tgt"),
+          eq(orders.status, "completed"),
+          sql`${orders.supplierOrderId} IS NOT NULL`,
+          sql`${orders.createdAt} > NOW() - INTERVAL 120 DAY`,
+        )
+      )
+      .limit(200);
+
+    const candidates = [
+      ...activeOrders.map((o) => ({ ...o, supplier: "vizlync" as const, supplierOrderId: null as string | null })),
+      ...tgtOrders.map((o) => ({ ...o, supplier: "tgt" as const, vizlyncOrderId: null as string | null })),
+    ];
+
+    console.log(`[LowUsageAlert] Checking ${activeOrders.length} Vizlync and ${tgtOrders.length} TGT orders`);
 
     let notified = 0;
     let exhaustedEmailed = 0;
     let skipped = 0;
 
-    for (const order of activeOrders) {
+    for (const order of candidates) {
       try {
         const esimData = order.esimData as Record<string, unknown> | null;
-        const vizlyncOrderId = esimData?.orderId as string | undefined;
-        if (!vizlyncOrderId) { skipped++; continue; }
+        // supplierRef: the Vizlync order id, or the TGT system order number (SE...).
+        let supplierRef: string;
+        let totalBytes = 0;
+        let usedBytes = 0;
 
-        // Fetch usage from Vizlync
-        let usageData: Record<string, unknown>;
-        try {
-          usageData = await getVizlyncUsage(vizlyncOrderId);
-        } catch {
-          skipped++;
-          continue;
+        if (order.supplier === "tgt") {
+          supplierRef = (order.supplierOrderId ?? "").trim();
+          if (!supplierRef) { skipped++; continue; }
+          let usage;
+          try {
+            usage = await queryTgtUsage(supplierRef);
+          } catch {
+            skipped++;
+            continue;
+          }
+          // Daily plans (and cards without real-time traffic) report no cycle total: nothing to alert on.
+          const totalMb = Number(usage?.dataTotal ?? 0);
+          if (!usage || !(totalMb > 0)) { skipped++; continue; }
+          totalBytes = totalMb * 1048576;
+          usedBytes = usage.dataResidual != null
+            ? totalBytes - Number(usage.dataResidual) * 1048576
+            : Number(usage.dataUsage ?? 0) * 1048576;
+          // Only when the plan looks nearly used up, confirm with TGT that the eSIM is still active.
+          if ((totalBytes - usedBytes) / totalBytes < LOW_USAGE_THRESHOLD) {
+            const info = await queryTgtOrder(`SU${order.id}`).catch(() => null);
+            if (!info || !["ACTIVATED", "INUSE"].includes(String(info.orderStatus))) { skipped++; continue; }
+          }
+        } else {
+          const vizlyncOrderId = esimData?.orderId as string | undefined;
+          if (!vizlyncOrderId) { skipped++; continue; }
+          supplierRef = vizlyncOrderId;
+
+          // Fetch usage from Vizlync
+          let usageData: Record<string, unknown>;
+          try {
+            usageData = await getVizlyncUsage(vizlyncOrderId);
+          } catch {
+            skipped++;
+            continue;
+          }
+
+          totalBytes = Number(usageData.dataAllowance ?? 0);
+          usedBytes = Number(usageData.dataUsage ?? 0);
+          const esimStatus = String(usageData.status ?? "");
+
+          // Only process Active eSIMs with valid data
+          if (esimStatus !== "Active" || totalBytes === 0) { skipped++; continue; }
         }
-
-        const totalBytes = Number(usageData.dataAllowance ?? 0);
-        const usedBytes = Number(usageData.dataUsage ?? 0);
-        const esimStatus = String(usageData.status ?? "");
-
-        // Only process Active eSIMs with valid data
-        if (esimStatus !== "Active" || totalBytes === 0) { skipped++; continue; }
 
         const remainingPct = (totalBytes - usedBytes) / totalBytes;
 
@@ -95,13 +154,14 @@ export async function handleScheduledLowUsageAlert(req: Request, res: Response) 
             .from(productsCache)
             .where(eq(productsCache.productId, order.productId))
             .limit(1);
-          const topUpAvailable = productRow[0]?.topUpAvailable ?? false;
+          // Top-up is only offered for Vizlync plans.
+          const topUpAvailable = order.supplier === "tgt" ? false : (productRow[0]?.topUpAvailable ?? false);
 
           // Fetch topup plans if available (pick representative low/mid/high, max 3)
           let topupPlanOptions: TopupPlanOption[] = [];
           if (topUpAvailable) {
             try {
-              const rawPlans = await getTopupPlans(vizlyncOrderId);
+              const rawPlans = await getTopupPlans(supplierRef);
               const plans = extractTopupPlans(rawPlans);
               // Sort by data volume, pick low/mid/high (max 3)
               const sorted = plans
@@ -128,7 +188,7 @@ export async function handleScheduledLowUsageAlert(req: Request, res: Response) 
             customerName: customerEmail,
             orderId: order.id,
             productName: order.productName,
-            vizlyncOrderId,
+            vizlyncOrderId: supplierRef,
             preferredLang: order.preferredLang ?? "zh-TW",
             topUpAvailable,
             topupPlans: topupPlanOptions,
@@ -225,7 +285,7 @@ export async function handleScheduledLowUsageAlert(req: Request, res: Response) 
     }
 
     console.log(`[LowUsageAlert] Done. Notified: ${notified}, ExhaustedEmailed: ${exhaustedEmailed}, Skipped: ${skipped}`);
-    res.json({ ok: true, checked: activeOrders.length, notified, exhaustedEmailed, skipped });
+    res.json({ ok: true, checked: candidates.length, notified, exhaustedEmailed, skipped });
   } catch (err) {
     console.error("[LowUsageAlert] Fatal error:", err);
     res.status(500).json({
