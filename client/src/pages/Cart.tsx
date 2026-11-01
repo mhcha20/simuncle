@@ -1,4 +1,5 @@
 import { useLanguage } from "@/contexts/LanguageContext";
+import { shortPlanName } from "@/lib/planName";
 import { PaymentBadges } from "@/components/PaymentBadges";
 import { useCurrency } from "@/hooks/useCurrency";
 import { translatePlanName } from "@/lib/countryNames";
@@ -214,7 +215,7 @@ export default function Cart() {
               const cartIsDailyPlan = cartDailyRe.test(cartItemName);
               const cartDailyLabel = language === "en" ? "per day" : language === "zh-CN" ? "每日" : language === "ja" ? "毎日" : language === "ko" ? "매일" : language === "th" ? "ต่อวัน" : "每日";
               const itemCountries = (productData?.countries as { id: string; name: string }[]) ?? [];
-              const translatedItemName = translatePlanName(cartItemName, language, itemCountries);
+              const translatedItemName = shortPlanName(productData, language) || translatePlanName(cartItemName, language, itemCountries);
 
               return (
                 <div key={item.id} className="bg-white rounded-2xl border border-border p-5 flex gap-4">
@@ -276,7 +277,7 @@ export default function Cart() {
               <div className="space-y-2 mb-4">
                 {items.map((item) => (
                   <div key={item.id} className="flex justify-between text-sm">
-                    <span className="text-muted-foreground line-clamp-1 flex-1 mr-2">{translatePlanName(String(item.productName ?? ""), language, (item.productData as Record<string, unknown>)?.countries as { id: string; name: string }[] ?? [])}</span>
+                    <span className="text-muted-foreground line-clamp-1 flex-1 mr-2">{shortPlanName(item.productData as Record<string, unknown>, language) || translatePlanName(String(item.productName ?? ""), language, (item.productData as Record<string, unknown>)?.countries as { id: string; name: string }[] ?? [])}</span>
                     <span className="shrink-0 font-medium">{toDisplay(toHkd(parseFloat(String(item.unitPrice))) * item.quantity)}</span>
                   </div>
                 ))}

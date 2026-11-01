@@ -1,4 +1,5 @@
 import { useParams, Link } from "wouter";
+import { shortPlanName } from "@/lib/planName";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useCurrency } from "@/hooks/useCurrency";
 import { trpc } from "@/lib/trpc";
@@ -506,7 +507,7 @@ function DestProductCard({
   const countries = (product.countries as { id: string; name: string }[]) ?? [];
   const customName = (product as Record<string, unknown>).customName as string | null | undefined;
   const translatedName = toDisplayChinese(
-    customName || translatePlanName(productName, language, countries),
+    customName || shortPlanName(product, language) || translatePlanName(productName, language, countries),
     language
   );
 
@@ -700,7 +701,7 @@ export default function DestinationPage() {
       const validityDays = Number(p.validityDays ?? 0);
       const pName = String(p.name ?? "");
       const countries = (p.countries as { id: string; name: string }[]) ?? [];
-      const translatedPName = toDisplayChinese(translatePlanName(pName, langKey, countries), langKey);
+      const translatedPName = toDisplayChinese(shortPlanName(p, langKey) || translatePlanName(pName, langKey, countries), langKey);
       return {
         "@type": "ListItem",
         position: idx + 1,

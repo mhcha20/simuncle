@@ -1,4 +1,5 @@
 import { useLanguage } from "@/contexts/LanguageContext";
+import { shortPlanName } from "@/lib/planName";
 import { useCurrency } from "@/hooks/useCurrency";
 import { CustomSEO } from "@/components/SEO";
 import { PaymentBadges } from "@/components/PaymentBadges";
@@ -194,7 +195,7 @@ export default function ProductDetail() {
     const _countries = (product.countries as { id: string; name: string }[]) ?? [];
     const _customName = (product as Record<string, unknown>).customName as string | null | undefined;
     const _name = toDisplayChinese(
-      _customName || translatePlanName(String(product.name ?? ""), language, _countries),
+      _customName || shortPlanName(product, language) || translatePlanName(String(product.name ?? ""), language, _countries),
       language
     );
     trackViewItem({
@@ -297,9 +298,11 @@ export default function ProductDetail() {
   const customName = (product as Record<string, unknown>).customName as string | null | undefined;
   const customDescription = (product as Record<string, unknown>).customDescription as string | null | undefined;
   const translatedPlanName = toDisplayChinese(
-    customName || translatePlanName(String(product.name ?? ""), language, countries),
+    customName || shortPlanName(product, language) || translatePlanName(String(product.name ?? ""), language, countries),
     language
   );
+  // The supplier's full name (carrier, speed after cap...) stays visible under the short title
+  const fullPlanName = customName ? "" : toDisplayChinese(translatePlanName(String(product.name ?? ""), language, countries), language);
   const displayPrice = formatPrice(costPrice, markupPct);
   const total = price * qty; // HKD integer total
   const displayTotal = currency.code === "HKD"
@@ -521,7 +524,10 @@ export default function ProductDetail() {
                 )}
 
               </div>
-              <h1 className="text-2xl font-bold text-foreground mb-2">{translatedPlanName}</h1>
+              <h1 className="text-2xl font-bold text-foreground mb-1">{translatedPlanName}</h1>
+              {fullPlanName && fullPlanName !== translatedPlanName && (
+                <p className="text-sm text-muted-foreground mb-2">{fullPlanName}</p>
+              )}
               {translateMutation.isPending && (
                 <div className="flex items-center gap-1.5 mt-1 text-xs text-muted-foreground">
                   <Loader2 className="w-3 h-3 animate-spin" />

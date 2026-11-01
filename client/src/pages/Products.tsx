@@ -1,4 +1,5 @@
 import { useLanguage } from "@/contexts/LanguageContext";
+import { shortPlanName } from "@/lib/planName";
 import { useCurrency } from "@/hooks/useCurrency";
 import { PageSEO } from "@/components/SEO";
 import { translateCountry, translateRegion, translatePlanName, translateSearchQuery, countryNameMap, getCountriesByRegion } from "@/lib/countryNames";
@@ -112,7 +113,7 @@ function ProductCard({ product, onAddToCart, onBuyNow, buyNowPending = false, ma
   const countries = (product.countries as { id: string; name: string }[]) ?? [];
   const customName = (product as Record<string, unknown>).customName as string | null | undefined;
   const translatedName = toDisplayChinese(
-    customName || translatePlanName(String(product.name ?? ""), language, countries),
+    customName || shortPlanName(product, language) || translatePlanName(String(product.name ?? ""), language, countries),
     language
   );
   const isTopUpPlan = /topup/i.test(String(product.name ?? ""));

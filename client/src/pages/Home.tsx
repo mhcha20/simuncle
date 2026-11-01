@@ -1,4 +1,5 @@
 import { useLanguage } from "@/contexts/LanguageContext";
+import { shortPlanName } from "@/lib/planName";
 import { trackSearch } from "@/lib/gtm";
 import { PageSEO } from "@/components/SEO";
 import { translateCountry, translateRegion, translatePlanName, countryNameMap } from "@/lib/countryNames";
@@ -102,7 +103,7 @@ function ProductCard({ product, markupPct = 0 }: { product: Record<string, unkno
   const countries = (product.countries as { id: string; name: string }[]) ?? [];
   const customName = (product as Record<string, unknown>).customName as string | null | undefined;
   const translatedName = toDisplayChinese(
-    customName || translatePlanName(String(product.name ?? ""), language, countries),
+    customName || shortPlanName(product, language) || translatePlanName(String(product.name ?? ""), language, countries),
     language
   );
 
