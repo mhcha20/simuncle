@@ -92,7 +92,7 @@ export default function Navbar() {
   const langShort = LANG_SHORT[language] ?? "EN";
 
   return (
-    <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-sm border-b border-border shadow-sm">
+    <header className="sticky top-0 z-50 bg-muted/95 backdrop-blur-sm border-b border-border shadow-sm">
       <div className="container">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
