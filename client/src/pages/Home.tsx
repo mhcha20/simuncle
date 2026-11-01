@@ -525,13 +525,13 @@ export default function Home() {
       icon: <Zap className="w-6 h-6" />,
       title: t.home.feature1Title,
       desc: t.home.feature1Desc,
-      color: "bg-amber-50 text-amber-600",
+      color: "bg-orange-50 text-[#ea622a]",
     },
     {
       icon: <Globe className="w-6 h-6" />,
       title: t.home.feature2Title,
       desc: t.home.feature2Desc,
-      color: "bg-blue-50 text-blue-600",
+      color: "bg-primary/10 text-primary",
     },
     {
       icon: <Signal className="w-6 h-6" />,
@@ -543,7 +543,7 @@ export default function Home() {
       icon: <Shield className="w-6 h-6" />,
       title: t.home.feature4Title,
       desc: t.home.feature4Desc,
-      color: "bg-purple-50 text-purple-600",
+      color: "bg-orange-50 text-[#ea622a]",
     },
   ];
 
@@ -844,11 +844,11 @@ export default function Home() {
       {/* Why Us */}
       <section className="py-16">
         <div className="container">
-          <div className="text-center mb-12">
+          <div className="text-center mb-8 sm:mb-12">
             <h2 className="text-2xl font-bold text-foreground mb-3">{t.home.whyUs}</h2>
             <p className="text-muted-foreground max-w-xl mx-auto">{t.home.whyUsDesc}</p>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
             {features.map((feature, i) => (
               <motion.div
                 key={i}
@@ -856,13 +856,15 @@ export default function Home() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: i * 0.1 }}
-                className="text-center p-6 rounded-2xl border border-border bg-white hover:shadow-md transition-shadow"
+                className="flex items-start gap-4 text-left sm:flex-col sm:items-center sm:text-center p-4 sm:p-6 rounded-2xl border border-border bg-white hover:shadow-md transition-shadow"
               >
-                <div className={`w-14 h-14 rounded-2xl ${feature.color} flex items-center justify-center mx-auto mb-4`}>
+                <div className={`w-12 h-12 sm:w-14 sm:h-14 shrink-0 rounded-2xl ${feature.color} flex items-center justify-center sm:mx-auto sm:mb-2`}>
                   {feature.icon}
                 </div>
-                <h3 className="font-semibold text-foreground mb-2">{feature.title}</h3>
-                <p className="text-sm text-muted-foreground leading-relaxed">{feature.desc}</p>
+                <div>
+                  <h3 className="font-semibold text-foreground mb-1 sm:mb-2">{feature.title}</h3>
+                  <p className="text-sm text-muted-foreground leading-relaxed">{feature.desc}</p>
+                </div>
               </motion.div>
             ))}
           </div>
