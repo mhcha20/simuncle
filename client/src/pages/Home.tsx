@@ -1046,9 +1046,9 @@ export default function Home() {
                   : "分享您的推薦碼給朋友，朋友享 9 折優惠，您獲得成交金額 10% 佣金，無限次數，無上限。"}
               </p>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-10">
-              <div className="bg-white rounded-2xl border border-orange-100 p-6 text-center shadow-sm">
-                <div className="w-12 h-12 rounded-xl bg-orange-100 flex items-center justify-center mx-auto mb-3">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-6 mb-8 sm:mb-10">
+              <div className="grid grid-cols-[auto_1fr] gap-x-4 items-center text-left p-4 sm:block sm:text-center sm:p-6 bg-white rounded-2xl border border-orange-100 shadow-sm">
+                <div className="row-span-2 w-12 h-12 rounded-xl bg-orange-100 flex items-center justify-center sm:mx-auto sm:mb-3">
                   <Gift className="w-6 h-6 text-[#ea622a]" />
                 </div>
                 <h3 className="font-semibold text-foreground mb-1">
@@ -1063,8 +1063,8 @@ export default function Home() {
                     : "朋友購買時即享折扣優惠"}
                 </p>
               </div>
-              <div className="bg-white rounded-2xl border border-orange-100 p-6 text-center shadow-sm">
-                <div className="w-12 h-12 rounded-xl bg-orange-100 flex items-center justify-center mx-auto mb-3">
+              <div className="grid grid-cols-[auto_1fr] gap-x-4 items-center text-left p-4 sm:block sm:text-center sm:p-6 bg-white rounded-2xl border border-orange-100 shadow-sm">
+                <div className="row-span-2 w-12 h-12 rounded-xl bg-orange-100 flex items-center justify-center sm:mx-auto sm:mb-3">
                   <TrendingUp className="w-6 h-6 text-[#ea622a]" />
                 </div>
                 <h3 className="font-semibold text-foreground mb-1">
@@ -1079,8 +1079,8 @@ export default function Home() {
                     : "每筆成功推薦均可獲得 10% 佣金"}
                 </p>
               </div>
-              <div className="bg-white rounded-2xl border border-orange-100 p-6 text-center shadow-sm">
-                <div className="w-12 h-12 rounded-xl bg-orange-100 flex items-center justify-center mx-auto mb-3">
+              <div className="grid grid-cols-[auto_1fr] gap-x-4 items-center text-left p-4 sm:block sm:text-center sm:p-6 bg-white rounded-2xl border border-orange-100 shadow-sm">
+                <div className="row-span-2 w-12 h-12 rounded-xl bg-orange-100 flex items-center justify-center sm:mx-auto sm:mb-3">
                   <Users className="w-6 h-6 text-[#ea622a]" />
                 </div>
                 <h3 className="font-semibold text-foreground mb-1">
