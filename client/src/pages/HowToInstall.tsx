@@ -908,7 +908,7 @@ export default function HowToInstall() {
                         android: [
                           "/install/esim-android-step1-ja-v2-C6bcGYqhUW8FNXuepYWWSk.webp",
                           "/install/esim-android-step2-ja-v2-Yy5BGVRNkE6ZTCbSEqkphh.webp",
-                          "/install/esim-android-step3-en-v2-BggEfCmeVeKgspvdasAZwT.webp",
+                          "/install/esim-android-step3-ja-v3.webp",
                           "/install/esim-android-step4-ja-v2-8AUwcaMMP4R72zfFeHnYMj.webp",
                           "/install/esim-android-step5-ja-v2-QEPB9Ti3pnGyLW9JUbCeV6.webp",
                           "/install/esim-android-step6-ja-v2-oH66h4BZAFqfzArKg78j84.webp",
@@ -944,7 +944,7 @@ export default function HowToInstall() {
                         android: [
                           "/install/esim-android-step1-th-v2-VxPk9wU2kwsF5UKjVVanah.webp",
                           "/install/esim-android-step2-th-v2-V5VreRhT3PEPzBBrYF7ynX.webp",
-                          "/install/esim-android-step3-en-v2-BggEfCmeVeKgspvdasAZwT.webp",
+                          "/install/esim-android-step3-th-v3.webp",
                           "/install/esim-android-step4-th-v2-k3vChkpNaEnWDtihHSCfrp.webp",
                           "/install/esim-android-step5-th-v2-MsZwhN9UQ3faq8Tzw5pgGX.webp",
                           "/install/esim-android-step6-th-v2-cukCghbWKC9sYQqfxrMnpy.webp",
