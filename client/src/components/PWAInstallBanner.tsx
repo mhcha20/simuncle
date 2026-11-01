@@ -34,20 +34,30 @@ export function PWAInstallBanner() {
     const isIOSDevice = /iPad|iPhone|iPod/.test(ua) && !(window as unknown as { MSStream?: unknown }).MSStream;
     setIsIOS(isIOSDevice);
 
-    if (isIOSDevice) {
-      // Show iOS instructions banner after 3 seconds
-      const timer = setTimeout(() => setShowBanner(true), 3000);
-      return () => clearTimeout(timer);
-    }
+    // Do not interrupt a first look at the site: offer the install only after the visitor
+    // has stayed a while (SHOW_AFTER_MS), and on Android only once the browser allows it.
+    const SHOW_AFTER_MS = 30_000;
+    let waited = false;
+    let promptReady = isIOSDevice;
+    const timer = setTimeout(() => {
+      waited = true;
+      if (promptReady) setShowBanner(true);
+    }, SHOW_AFTER_MS);
+
+    if (isIOSDevice) return () => clearTimeout(timer);
 
     // Android/Chrome: listen for beforeinstallprompt
     const handler = (e: Event) => {
       e.preventDefault();
       setDeferredPrompt(e as BeforeInstallPromptEvent);
-      setShowBanner(true);
+      promptReady = true;
+      if (waited) setShowBanner(true);
     };
     window.addEventListener("beforeinstallprompt", handler);
-    return () => window.removeEventListener("beforeinstallprompt", handler);
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener("beforeinstallprompt", handler);
+    };
   }, []);
 
   const handleInstall = async () => {

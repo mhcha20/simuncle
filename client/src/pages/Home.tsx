@@ -500,10 +500,8 @@ export default function Home() {
   const { t, language } = useLanguage();
   const { isAuthenticated } = useAuth();
 
-  const productsQuery = trpc.products.list.useQuery(
-    { limit: 8, offset: 0, sortBy: "price_asc" },
-    { staleTime: 5 * 60 * 1000 }
-  );
+  // One typical plan per popular destination (e.g. Japan 7 days 5 GB)
+  const productsQuery = trpc.products.featured.useQuery(undefined, { staleTime: 5 * 60 * 1000 });
   const settingsQuery = trpc.settings.getAll.useQuery(undefined, { staleTime: 5 * 60 * 1000 });
   const latestArticlesQuery = trpc.articles.list.useQuery({ limit: 3, offset: 0 }, { staleTime: 5 * 60 * 1000 });
   const markupPct = parseFloat(settingsQuery.data?.["markup_percentage"] ?? "0");
@@ -703,7 +701,7 @@ export default function Home() {
               <div className="flex flex-col items-start gap-2 mb-6">
                 <div className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-sm text-white rounded-full px-4 py-1.5 text-sm font-medium border border-white/30">
                   <Wifi className="w-4 h-4" />
-                  <span>200+ {t.regions.allRegions}</span>
+                  <span>{language === "en" ? "200+ countries & regions" : language === "zh-CN" ? "覆盖 200+ 国家及地区" : language === "ja" ? "200以上の国と地域" : language === "ko" ? "200개 이상 국가 및 지역" : language === "th" ? "ครอบคลุม 200+ ประเทศ" : "覆蓋 200+ 國家及地區"}</span>
                 </div>
                 <div className="inline-flex items-center gap-2 bg-amber-500/90 backdrop-blur-sm rounded-full px-4 py-1.5 text-sm">
                   <span className="text-white">🎁</span>

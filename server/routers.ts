@@ -79,6 +79,7 @@ import {
   terminateVizlyncOrder,
 } from "./vizlync";
 import { buildSupportContext } from "./supportContext";
+import { featuredCountryCodes, pickFeaturedPlan } from "./featuredPlans";
 import { appendQuery, refundOrderPayment, createCheckoutSession, createTopupCheckoutSession, confirmAndFulfillBySession, resumeTopupCheckout } from "./stripe";
 import { fetchAllTgtProducts, normalizeTgtProduct, createTgtOrder, queryTgtUsage } from "./tgt";
 import { sendOrderConfirmationEmail, sendCustomEmailToCustomer, sendTerminationEmail } from "./email";
@@ -213,6 +214,18 @@ const productsRouter = router({
     .query(async ({ input }) => {
       return getProducts(input);
     }),
+
+  // Home page: one typical plan for each popular destination.
+  featured: publicProcedure.query(async () => {
+    const codes = featuredCountryCodes(await getSetting("popular_countries"));
+    const picks = await Promise.all(
+      codes.map(async (code) => {
+        const { products } = await getProducts({ countries: [code], limit: 100, sortBy: "price_asc" });
+        return pickFeaturedPlan(products);
+      })
+    );
+    return { products: picks.filter((p): p is NonNullable<typeof p> => p !== null) };
+  }),
 
   getById: publicProcedure
     .input(z.object({ productId: z.string() }))

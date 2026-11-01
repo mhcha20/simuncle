@@ -1,6 +1,7 @@
 import { trpc } from "@/lib/trpc";
 import { MessageCircle, Bot, X, Sparkles } from "lucide-react";
 import { useState, lazy, Suspense } from "react";
+import { useLocation } from "wouter";
 import { useLanguage } from "@/contexts/LanguageContext";
 import type { Message } from "@/components/AIChatBox";
 
@@ -10,6 +11,9 @@ const AIChatBox = lazy(() =>
 );
 
 export function WhatsAppButton() {
+  // Product pages have a fixed buy bar at the bottom on phones: sit above it there.
+  const [location] = useLocation();
+  const aboveBuyBar = location.startsWith("/products/");
   const settingsQuery = trpc.settings.getAll.useQuery(undefined, { staleTime: 5 * 60 * 1000 });
   const whatsappNumber = settingsQuery.data?.["whatsapp_number"] || "98885159";
   const cleaned = whatsappNumber.replace(/\D/g, "");
@@ -136,7 +140,7 @@ export function WhatsAppButton() {
       {/* AI Chat Panel — only rendered (and loaded) when user opens chat */}
       {chatOpen && (
         <div
-          className="fixed bottom-24 right-4 z-50 w-[calc(100vw-2rem)] max-w-sm shadow-2xl rounded-2xl overflow-hidden border border-border bg-background flex flex-col"
+          className={`fixed ${aboveBuyBar ? "bottom-44 lg:bottom-24" : "bottom-24"} right-4 z-50 w-[calc(100vw-2rem)] max-w-sm shadow-2xl rounded-2xl overflow-hidden border border-border bg-background flex flex-col`}
           style={{ height: "480px" }}
         >
           {/* Header */}
@@ -176,7 +180,7 @@ export function WhatsAppButton() {
 
       {/* Expanded Menu */}
       {menuOpen && !chatOpen && (
-        <div className="fixed bottom-24 right-4 z-50 flex flex-col gap-2 items-end">
+        <div className={`fixed ${aboveBuyBar ? "bottom-44 lg:bottom-24" : "bottom-24"} right-4 z-50 flex flex-col gap-2 items-end`}>
           {/* AI Support Button */}
           <button
             onClick={openChat}
@@ -215,7 +219,7 @@ export function WhatsAppButton() {
           }
         }}
         aria-label="Customer Support"
-        className="fixed bottom-6 right-6 z-50 flex items-center justify-center w-14 h-14 rounded-full shadow-lg bg-[#25D366] hover:bg-[#20BA5A] active:scale-95 transition-all duration-150"
+        className={`fixed ${aboveBuyBar ? "bottom-24 lg:bottom-6" : "bottom-6"} right-6 z-50 flex items-center justify-center w-14 h-14 rounded-full shadow-lg bg-[#25D366] hover:bg-[#20BA5A] active:scale-95 transition-all duration-150`}
         style={{ boxShadow: "0 4px 20px rgba(37,211,102,0.45)" }}
       >
         {menuOpen || chatOpen ? (

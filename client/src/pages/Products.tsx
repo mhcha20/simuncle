@@ -18,7 +18,7 @@ import {
 } from "@/components/ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
-import { Search, Wifi, X, Check, ChevronDown, Zap } from "lucide-react";
+import { Search, Wifi, X, Check, ChevronDown, Zap, SlidersHorizontal } from "lucide-react";
 import { Link, useSearch, useLocation } from "wouter";
 import { useState, useEffect, useMemo, useRef } from "react";
 import { motion } from "framer-motion";
@@ -255,6 +255,8 @@ export default function Products() {
   const [duration, setDuration] = useState("all");
   const [topUpOnly, setTopUpOnly] = useState(params.get("topup") === "1");
   const [sortBy, setSortBy] = useState<"price_asc" | "price_desc" | "validity" | "data">("price_asc");
+  // Phones: filters stay folded behind one button so the plans are visible straight away
+  const [showFilters, setShowFilters] = useState(false);
   const [page, setPage] = useState(0);
   const LIMIT = 24;
 
@@ -521,10 +523,10 @@ export default function Products() {
     <div className="min-h-screen bg-background">
       <PageSEO page="products" path="/products" />
       {/* Page Header */}
-      <div className="bg-gradient-to-r from-primary/8 to-secondary/20 border-b border-border py-10">
+      <div className="bg-gradient-to-r from-primary/8 to-secondary/20 border-b border-border py-6 sm:py-10">
         <div className="container">
-          <h1 className="text-3xl font-bold text-foreground mb-2">{t.products.title}</h1>
-          <p className="text-muted-foreground mb-5">{t.products.subtitle}</p>
+          <h1 className="text-2xl sm:text-3xl font-bold text-foreground mb-2">{t.products.title}</h1>
+          <p className="hidden sm:block text-muted-foreground mb-5">{t.products.subtitle}</p>
           {/* Quick country search */}
           <div ref={qContainerRef} className="relative max-w-sm">
             <div className="flex items-center bg-white rounded-xl border border-border h-11 px-3 gap-2 focus-within:ring-2 focus-within:ring-primary/40 shadow-sm transition-all">
@@ -623,9 +625,30 @@ export default function Products() {
         </div>
       </div>
 
-      <div className="container py-8">
+      <div className="container py-5 sm:py-8">
         {/* Filters */}
-        <div className="bg-white rounded-2xl border border-border p-4 mb-6 shadow-sm">
+        <div className="bg-white rounded-2xl border border-border p-3 sm:p-4 mb-6 shadow-sm">
+          {/* Phones: one button opens the filters */}
+          {(() => {
+            const activeCount = [search, region !== "all", countries.length > 0, dataSize !== "all", duration !== "all", topUpOnly].filter(Boolean).length;
+            return (
+              <Button
+                type="button"
+                variant="outline"
+                className="sm:hidden w-full h-10 justify-between"
+                aria-expanded={showFilters}
+                onClick={() => setShowFilters(v => !v)}
+              >
+                <span className="flex items-center gap-2">
+                  <SlidersHorizontal className="w-4 h-4" />
+                  {language === "en" ? "Filter & sort" : language === "zh-CN" ? "筛选及排序" : language === "ja" ? "絞り込み・並べ替え" : language === "ko" ? "필터 및 정렬" : language === "th" ? "กรองและเรียง" : "篩選及排序"}
+                  {activeCount > 0 && <Badge className="h-5 px-1.5 text-xs">{activeCount}</Badge>}
+                </span>
+                <ChevronDown className={`w-4 h-4 transition-transform ${showFilters ? "rotate-180" : ""}`} />
+              </Button>
+            );
+          })()}
+          <div className={`${showFilters ? "block mt-3" : "hidden"} sm:block sm:mt-0`}>
           {/* Text search */}
           <div className="relative mb-3">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
@@ -769,6 +792,7 @@ export default function Products() {
                 <SelectItem value="data">{t.products.sortData}</SelectItem>
               </SelectContent>
             </Select>
+          </div>
           </div>
 
           {/* Active filters */}

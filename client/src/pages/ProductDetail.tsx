@@ -67,6 +67,15 @@ export default function ProductDetail() {
     { enabled: !!params.id }
   );
 
+  // Mobile buy bar: shown while the purchase card is off screen
+  const [purchaseCardEl, setPurchaseCardEl] = useState<HTMLDivElement | null>(null);
+  const [purchaseCardVisible, setPurchaseCardVisible] = useState(false);
+  useEffect(() => {
+    if (!purchaseCardEl || typeof IntersectionObserver === "undefined") return;
+    const observer = new IntersectionObserver(([entry]) => setPurchaseCardVisible(entry.isIntersecting), { threshold: 0.25 });
+    observer.observe(purchaseCardEl);
+    return () => observer.disconnect();
+  }, [purchaseCardEl]);
   const addToCartMutation = trpc.cart.add.useMutation({
     onSuccess: () => {
       toast.success(t.products.addToCart + " ✓");
@@ -543,32 +552,6 @@ export default function ProductDetail() {
                 />
               );
             })()}
-
-            {/* Key Stats */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-              {[
-                { icon: <Wifi className="w-5 h-5 text-primary" />, label: pdIsDailyPlan ? (language === "en" ? "per day" : language === "zh-CN" ? "每日" : language === "ja" ? "毎日" : language === "ko" ? "매일" : language === "th" ? "ต่อวัน" : "每日") : t.productDetail.dataAmount, value: dataDisplayLabel, sublabel: pdIsDailyPlan && isUnlimited ? (language === "en" ? "+ Unlimited" : language === "zh-CN" ? "+ 降速不限量" : language === "ja" ? "+ 低速無制限" : language === "ko" ? "+ 속도 제한 무제한" : language === "th" ? "+ ไม่จำกัด" : "+ 降速不限量") : undefined },
-                { icon: <Clock className="w-5 h-5 text-primary" />, label: t.productDetail.validity, value: isNaturalDay
-                    ? (language === "en" ? `${validityDays} Calendar Days` : language === "zh-CN" ? `${validityDays} 日历天` : language === "ja" ? `${validityDays} カレンダー日` : language === "ko" ? `${validityDays} 달력 일수` : language === "th" ? `${validityDays} วันตามปฏิทิน` : `${validityDays} 日曆天`)
-                    : `${validityDays} ${t.common.days}`,
-                  sublabel: product.activationPolicy === 'ACTIVATE_ON_ORDER'
-                    ? (language === "en" ? "Starts from purchase" : language === "zh-CN" ? "下单后开始计时" : language === "ja" ? "注文後即座開始" : language === "ko" ? "주문 후 즉시 시작" : language === "th" ? "เริ่มหลังสั่งซื้อ" : "下單後開始計時")
-                    : product.activationPolicy === 'AUTO_ACTIVATE'
-                    ? (language === "en" ? "Starts on first use" : language === "zh-CN" ? "首次使用时开始" : language === "ja" ? "初回使用時に開始" : language === "ko" ? "첫 사용 시 시작" : language === "th" ? "เริ่มเมื่อใช้ครั้งแรก" : "首次使用時開始")
-                    : undefined },
-                { icon: <Signal className="w-5 h-5 text-primary" />, label: t.productDetail.network, value: String(product.networkType ?? "4G") },
-                { icon: <Globe className="w-5 h-5 text-primary" />, label: t.productDetail.countries, value: `${countries.length}` },
-              ].map((stat) => (
-                <div key={stat.label} className="bg-white rounded-xl border border-border p-4 text-center">
-                  <div className="flex justify-center mb-2">{stat.icon}</div>
-                  <div className="font-bold text-foreground">{stat.value}</div>
-                  {'sublabel' in stat && stat.sublabel && (
-                    <div className="text-xs text-primary/70 font-medium">{stat.sublabel}</div>
-                  )}
-                  <div className="text-xs text-muted-foreground mt-0.5">{stat.label}</div>
-                </div>
-              ))}
-            </div>
 
             {/* Tabbed Info Sections */}
             <Tabs defaultValue="overview" className="w-full">
@@ -1092,7 +1075,7 @@ export default function ProductDetail() {
 
           {/* Right: Purchase Card */}
           <div className="lg:col-span-1">
-            <div className="bg-white rounded-2xl border border-border p-6 shadow-sm sticky top-24">
+            <div ref={setPurchaseCardEl} id="purchase" className="bg-white rounded-2xl border border-border p-6 shadow-sm sticky top-24 scroll-mt-24">
               <div className="text-3xl font-bold text-primary mb-1">{displayPrice}</div>
               <div className="text-sm text-muted-foreground mb-4">{currency.code}</div>
 
@@ -1356,6 +1339,39 @@ export default function ProductDetail() {
           </div>
         </div>
       </div>
+
+      {/* Phones: price and buy button always in reach (hidden while the purchase card is on screen) */}
+      {!purchaseCardVisible && (
+        <div className="lg:hidden fixed inset-x-0 bottom-0 z-40 border-t border-border bg-white/95 backdrop-blur px-4 pt-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] shadow-[0_-4px_16px_rgba(0,0,0,0.06)]">
+          <div className="flex items-center gap-3">
+            <div className="min-w-0">
+              <div className="text-xs text-muted-foreground">{t.productDetail.total}</div>
+              <div className="text-xl font-bold text-primary leading-tight">{displayTotal}</div>
+            </div>
+            <Button
+              type="button"
+              className="ml-auto h-11 px-6 bg-primary hover:bg-primary/90 text-white"
+              disabled={checkoutMutation.isPending || addToCartMutation.isPending}
+              onClick={() => {
+                // Plans with a start date to choose go to the purchase card first
+                if (product.activationPolicy === "ACTIVATE_ON_ORDER") {
+                  document.getElementById("purchase")?.scrollIntoView({ behavior: "smooth", block: "start" });
+                } else {
+                  handleBuyNow();
+                }
+              }}
+            >
+              {checkoutMutation.isPending ? (
+                <><Loader2 className="w-4 h-4 mr-2 animate-spin" />{t.checkout.processing}</>
+              ) : (
+                <><CreditCard className="w-4 h-4 mr-2" />{t.productDetail.buyNow}</>
+              )}
+            </Button>
+          </div>
+        </div>
+      )}
+      {/* Room so the bar never covers the end of the page */}
+      <div className="h-20 lg:hidden" aria-hidden="true" />
     </div>
   );
 }
