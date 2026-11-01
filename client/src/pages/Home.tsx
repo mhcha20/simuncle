@@ -48,6 +48,10 @@ const DESTINATION_PHOTOS: Record<string, string> = {
   JP: "/destinations/jp.webp", KR: "/destinations/kr.webp", TH: "/destinations/th.webp", GB: "/destinations/gb.webp",
   US: "/destinations/us.webp", AU: "/destinations/au.webp", FR: "/destinations/fr.webp", TW: "/destinations/tw.webp",
 };
+// Where the subject sits in photos whose interesting part is not in the middle
+const PHOTO_POSITION: Record<string, string> = {
+  "/destinations/jp.webp": "object-bottom", // Mt Fuji is at the bottom of the frame
+};
 
 const REGION_TRANSLATION_KEY: Record<string, keyof ReturnType<typeof useLanguage>["t"]["regions"]> = {
   Asia: "asia",
@@ -121,7 +125,7 @@ function ProductCard({ product, markupPct = 0, photo }: { product: Record<string
     >
       {photo && (
         <div className="aspect-[16/7] overflow-hidden bg-muted">
-          <img src={photo} alt="" width={800} height={350} loading="lazy" decoding="async" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+          <img src={photo} alt="" width={800} height={350} loading="lazy" decoding="async" className={`w-full h-full object-cover ${PHOTO_POSITION[photo] ?? ""} group-hover:scale-105 transition-transform duration-300`} />
         </div>
       )}
       <div className="p-5 flex flex-col flex-1">
