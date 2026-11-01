@@ -73,7 +73,7 @@ const ICONS = [Search, Mail, Plane];
 export function HowItWorks({ language }: { language: Language }) {
   const c = COPY[language] ?? COPY["zh-TW"];
   return (
-    <section className="py-14 bg-white">
+    <section className="py-14 bg-secondary/40">
       <div className="container">
         <div className="text-center mb-10">
           <h2 className="text-2xl font-bold text-foreground mb-2">{c.title}</h2>
@@ -83,7 +83,7 @@ export function HowItWorks({ language }: { language: Language }) {
           {c.steps.map(([title, desc], i) => {
             const Icon = ICONS[i];
             return (
-              <li key={title} className="relative flex md:flex-col items-start md:items-center gap-4 md:gap-3 rounded-2xl border border-border bg-muted/20 p-5 md:text-center">
+              <li key={title} className="relative flex md:flex-col items-start md:items-center gap-4 md:gap-3 rounded-2xl border border-border bg-white p-5 md:text-center">
                 <div className="relative shrink-0">
                   <div className="w-12 h-12 rounded-2xl bg-primary/10 text-primary flex items-center justify-center">
                     <Icon className="w-6 h-6" aria-hidden="true" />

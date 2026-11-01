@@ -108,3 +108,8 @@ export function dataFromName(name: unknown): string | null {
   const m = FIXED_RE.exec(String(name ?? ""));
   return m ? amountLabel(m[1], m[2]) : null;
 }
+
+/** "Unlimited/day" plans (no fixed amount): the localised "unlimited per day" label, else null. */
+export function unlimitedDailyFromName(name: unknown, lang: Language): string | null {
+  return /unlimited\s*\/\s*day/i.test(String(name ?? "")) ? (WORDS[lang] ?? WORDS["zh-TW"]).dailyUnlimited : null;
+}

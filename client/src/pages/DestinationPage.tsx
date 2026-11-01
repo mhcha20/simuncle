@@ -1,5 +1,5 @@
 import { useParams, Link } from "wouter";
-import { dataFromName, shortPlanName } from "@/lib/planName";
+import { dataFromName, shortPlanName, unlimitedDailyFromName } from "@/lib/planName";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useCurrency } from "@/hooks/useCurrency";
 import { trpc } from "@/lib/trpc";
@@ -484,7 +484,7 @@ function DestProductCard({
     ? dailyLabel
     : rawData != null && rawData > 0
     ? `${rawData}${dataUnit}`
-    : (dataFromName(product.name) ?? "N/A");
+    : (dataFromName(product.name) ?? unlimitedDailyFromName(product.name, language) ?? "N/A");
   // TGT unlimited: daily plan with positive dataAmount (high-speed cap + unlimited reduced speed)
   const isTgtUnlimited = isTgt && isDbDailyPlan && rawData != null && rawData > 0;
   // Parse throttle speed from product name

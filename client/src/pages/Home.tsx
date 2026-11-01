@@ -1,5 +1,5 @@
 import { useLanguage } from "@/contexts/LanguageContext";
-import { dataFromName, shortPlanName } from "@/lib/planName";
+import { dataFromName, shortPlanName, unlimitedDailyFromName } from "@/lib/planName";
 import { trackSearch } from "@/lib/gtm";
 import { PageSEO } from "@/components/SEO";
 import { translateCountry, translateRegion, translatePlanName, countryNameMap } from "@/lib/countryNames";
@@ -89,7 +89,7 @@ function ProductCard({ product, markupPct = 0, photo }: { product: Record<string
     ? homeDailyLabel
     : rawDataAmount != null && rawDataAmount > 0
     ? `${rawDataAmount} ${dataUnit}`
-    : (dataFromName(product.name) ?? "N/A");
+    : (dataFromName(product.name) ?? unlimitedDailyFromName(product.name, language) ?? "N/A");
   // TGT unlimited: daily plan with positive dataAmount (high-speed cap + unlimited reduced speed)
   const isTgtUnlimited = isTgt && isDbDailyPlan && rawDataAmount != null && rawDataAmount > 0;
   // Parse throttle speed from product name
@@ -759,7 +759,7 @@ export default function Home() {
       </section>
 
       {/* Browse by Region */}
-      <section className="py-16 bg-white">
+      <section className="py-16">
         <div className="container">
           <div className="flex items-center justify-between mb-8">
             <h2 className="text-2xl font-bold text-foreground">{t.home.browseByRegion}</h2>
@@ -792,7 +792,7 @@ export default function Home() {
       </section>
 
       {/* Popular Plans */}
-      <section className="py-16 bg-muted/30">
+      <section className="py-16 bg-secondary/40">
         <div className="container">
           <div className="flex items-center justify-between mb-8">
             <h2 className="text-2xl font-bold text-foreground">{t.home.popularPlans}</h2>
@@ -842,7 +842,7 @@ export default function Home() {
       <HowItWorks language={language} />
 
       {/* Why Us */}
-      <section className="py-16 bg-white">
+      <section className="py-16">
         <div className="container">
           <div className="text-center mb-12">
             <h2 className="text-2xl font-bold text-foreground mb-3">{t.home.whyUs}</h2>
@@ -856,7 +856,7 @@ export default function Home() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: i * 0.1 }}
-                className="text-center p-6 rounded-2xl border border-border hover:shadow-md transition-shadow"
+                className="text-center p-6 rounded-2xl border border-border bg-white hover:shadow-md transition-shadow"
               >
                 <div className={`w-14 h-14 rounded-2xl ${feature.color} flex items-center justify-center mx-auto mb-4`}>
                   {feature.icon}
@@ -870,7 +870,7 @@ export default function Home() {
       </section>
 
       {/* Device Compatibility Quick Check */}
-      <section className="py-12 bg-muted/40 border-y border-border">
+      <section className="py-12 bg-secondary/40 border-y border-border">
         <div className="container">
           <div className="flex flex-col sm:flex-row items-center justify-between gap-6 max-w-3xl mx-auto">
             <div className="flex items-center gap-4">
@@ -911,7 +911,7 @@ export default function Home() {
       </section>
 
       {/* Tips & Info (Latest Articles) */}
-      <section className="py-14 bg-white border-y border-border">
+      <section className="py-14 border-y border-border">
         <div className="container">
           <div className="flex items-center justify-between mb-8">
             <div>
@@ -1010,11 +1010,11 @@ export default function Home() {
       </section>
 
       {/* Referral Program Section */}
-      <section className="py-16 bg-gradient-to-br from-emerald-50 to-teal-50 border-y border-emerald-100">
+      <section className="py-16 bg-gradient-to-br from-orange-50 to-amber-50 border-y border-orange-100">
         <div className="container">
           <div className="max-w-4xl mx-auto">
             <div className="text-center mb-10">
-              <div className="inline-flex items-center gap-2 bg-emerald-100 text-emerald-700 rounded-full px-4 py-1.5 text-sm font-medium mb-4">
+              <div className="inline-flex items-center gap-2 bg-orange-100 text-orange-700 rounded-full px-4 py-1.5 text-sm font-medium mb-4">
                 <Gift className="w-4 h-4" />
                 {language === "en" ? "Referral Program" : language === "zh-CN" ? "推荐计划" : language === "ja" ? "紹介プログラム" : language === "ko" ? "추천 프로그램" : language === "th" ? "โปรแกรมแนะนำเพื่อน" : "推薦計劃"}
               </div>
@@ -1041,9 +1041,9 @@ export default function Home() {
               </p>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-10">
-              <div className="bg-white rounded-2xl border border-emerald-100 p-6 text-center shadow-sm">
-                <div className="w-12 h-12 rounded-xl bg-emerald-100 flex items-center justify-center mx-auto mb-3">
-                  <Gift className="w-6 h-6 text-emerald-600" />
+              <div className="bg-white rounded-2xl border border-orange-100 p-6 text-center shadow-sm">
+                <div className="w-12 h-12 rounded-xl bg-orange-100 flex items-center justify-center mx-auto mb-3">
+                  <Gift className="w-6 h-6 text-[#ea622a]" />
                 </div>
                 <h3 className="font-semibold text-foreground mb-1">
                   {language === "en" ? "Friend Gets 10% Off" : language === "zh-CN" ? "朋友享9折" : language === "ja" ? "友達が10%オフ" : language === "ko" ? "친구 10% 할인" : language === "th" ? "เพื่อนได้ส่วนลด 10%" : "朋友享 9 折"}
@@ -1057,9 +1057,9 @@ export default function Home() {
                     : "朋友購買時即享折扣優惠"}
                 </p>
               </div>
-              <div className="bg-white rounded-2xl border border-emerald-100 p-6 text-center shadow-sm">
-                <div className="w-12 h-12 rounded-xl bg-emerald-100 flex items-center justify-center mx-auto mb-3">
-                  <TrendingUp className="w-6 h-6 text-emerald-600" />
+              <div className="bg-white rounded-2xl border border-orange-100 p-6 text-center shadow-sm">
+                <div className="w-12 h-12 rounded-xl bg-orange-100 flex items-center justify-center mx-auto mb-3">
+                  <TrendingUp className="w-6 h-6 text-[#ea622a]" />
                 </div>
                 <h3 className="font-semibold text-foreground mb-1">
                   {language === "en" ? "You Earn 10% Commission" : language === "zh-CN" ? "您赚10%佣金" : language === "ja" ? "10%コミッション獲得" : language === "ko" ? "10% 커미션 획득" : language === "th" ? "คุณได้รับ 10% ค่าคอมมิชชั่น" : "您賺 10% 佣金"}
@@ -1073,9 +1073,9 @@ export default function Home() {
                     : "每筆成功推薦均可獲得 10% 佣金"}
                 </p>
               </div>
-              <div className="bg-white rounded-2xl border border-emerald-100 p-6 text-center shadow-sm">
-                <div className="w-12 h-12 rounded-xl bg-emerald-100 flex items-center justify-center mx-auto mb-3">
-                  <Users className="w-6 h-6 text-emerald-600" />
+              <div className="bg-white rounded-2xl border border-orange-100 p-6 text-center shadow-sm">
+                <div className="w-12 h-12 rounded-xl bg-orange-100 flex items-center justify-center mx-auto mb-3">
+                  <Users className="w-6 h-6 text-[#ea622a]" />
                 </div>
                 <h3 className="font-semibold text-foreground mb-1">
                   {language === "en" ? "No Limits" : language === "zh-CN" ? "无限次数" : language === "ja" ? "回数無制限" : language === "ko" ? "횟수 무제한" : language === "th" ? "ไม่จำกัดจำนวนครั้ง" : "無限次數"}
@@ -1092,7 +1092,7 @@ export default function Home() {
             </div>
             <div className="text-center">
               <Link href="/referral">
-                <Button size="lg" className="bg-emerald-600 hover:bg-emerald-700 text-white px-8 h-12 text-base font-semibold">
+                <Button size="lg" className="bg-[#ea622a] hover:bg-[#d4541f] text-white px-8 h-12 text-base font-semibold">
                   <Gift className="w-5 h-5 mr-2" />
                   {language === "en" ? "Get My Referral Code"
                     : language === "zh-CN" ? "获取我的推荐码"
