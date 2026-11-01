@@ -611,7 +611,8 @@ export default function DestinationPage() {
 
   // Fetch settings for markup
   const { data: settings } = trpc.settings.getAll.useQuery(undefined, { staleTime: 60_000 });
-  const markupPct = parseFloat(settings?.["markup_pct"] ?? "0");
+  // Same setting the rest of the site and checkout use (was "markup_pct", which does not exist, so prices showed without markup)
+  const markupPct = parseFloat(settings?.["markup_percentage"] ?? "0");
   const { formatPrice } = useCurrency();
 
   // Fetch related articles
@@ -627,9 +628,12 @@ export default function DestinationPage() {
   );
 
   const products = useMemo(() => {
-    const all = (productsData?.products ?? []) as Record<string, unknown>[];
+    const fetched = (productsData?.products ?? []) as Record<string, unknown>[];
+    // Country pages: plans for this country alone come before multi-country plans (order kept within each group)
+    const isSingle = (p: Record<string, unknown>) => Array.isArray(p.countries) && p.countries.length === 1;
+    const all = config?.region ? fetched : [...fetched.filter(isSingle), ...fetched.filter((p) => !isSingle(p))];
     return showAll ? all : all.slice(0, 9);
-  }, [productsData, showAll]);
+  }, [productsData, showAll, config]);
 
   if (!config) return <NotFound />;
 
