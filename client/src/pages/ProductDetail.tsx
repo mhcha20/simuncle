@@ -1,6 +1,7 @@
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useCurrency } from "@/hooks/useCurrency";
 import { CustomSEO } from "@/components/SEO";
+import { PaymentBadges } from "@/components/PaymentBadges";
 import { translateCountry, translateRegion, translatePlanName, translateProductValue, translateSearchQuery, countryNameMap, nameToEntry, countryRegionMap } from "@/lib/countryNames";
 import { toDisplayChinese } from "@/lib/zhConvert";
 import { useAuth } from "@/_core/hooks/useAuth";
@@ -1325,6 +1326,8 @@ export default function ProductDetail() {
                   {t.productDetail.addToCart}
                 </Button>
               </div>
+
+              <PaymentBadges language={language} className="mt-4" />
 
               {/* Trust badges */}
               <div className="mt-4 pt-4 border-t border-border space-y-2">

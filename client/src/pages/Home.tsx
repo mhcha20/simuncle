@@ -31,6 +31,7 @@ import { motion } from "framer-motion";
 import { useState, useRef, useEffect, useMemo } from "react";
 import { useCurrency } from "@/hooks/useCurrency";
 import { encodeProductSlug } from "@shared/productSlug";
+import { HowItWorks } from "@/components/HowItWorks";
 
 const REGION_CONFIG = [
   { key: "Asia", img: "/manus-storage/region-asia_1405db75.webp" },
@@ -816,6 +817,9 @@ export default function Home() {
           )}
         </div>
       </section>
+
+      {/* How it works + payment methods */}
+      <HowItWorks language={language} />
 
       {/* Why Us */}
       <section className="py-16 bg-white">

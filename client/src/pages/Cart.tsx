@@ -1,4 +1,5 @@
 import { useLanguage } from "@/contexts/LanguageContext";
+import { PaymentBadges } from "@/components/PaymentBadges";
 import { useCurrency } from "@/hooks/useCurrency";
 import { translatePlanName } from "@/lib/countryNames";
 import { formatDataAmount } from "@/lib/dataAmount";
@@ -443,6 +444,7 @@ export default function Cart() {
                   </>
                 )}
               </Button>
+              <PaymentBadges language={language} className="mt-3" />
               <Link href="/products">
                 <Button variant="outline" className="w-full h-10 mt-2">
                   <ShoppingCart className="w-4 h-4 mr-2" />
