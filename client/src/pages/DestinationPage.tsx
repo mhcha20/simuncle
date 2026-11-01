@@ -464,7 +464,7 @@ function DestProductCard({
 
   // Detect daily-quota plans
   const productName = String(product.name ?? "");
-  const dailyRe = /(?:([\d.]+)\s*(GB|MB|TB)\/(?:Natural\s+)?day|daily\s+([\d.]+)\s*(GB|MB|TB))/i;
+  const dailyRe = /(?:([\d.]+)\s*(GB|MB|TB)[^\/]*\/(?:Natural\s+)?(?:day|天)|daily\s+([\d.]+)\s*(GB|MB|TB))/i;
   const dailyMatch = dailyRe.exec(productName);
   const isDailyPlan = isDbDailyPlan || !!(dailyMatch);
   const dailyAmt = isDbDailyPlan && rawData != null && rawData > 0

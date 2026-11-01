@@ -63,7 +63,7 @@ function ProductCard({ product, markupPct = 0 }: { product: Record<string, unkno
   // Detect daily-quota plans from name:
   // Formats: "500MB/day", "500MB/Natural day", "daily 500MB"
   const homeProductName = String(product.name ?? "");
-  const homeDailyRe = /(?:([\d.]+)\s*(GB|MB|TB)\/(?:Natural\s+)?day|daily\s+([\d.]+)\s*(GB|MB|TB))/i;
+  const homeDailyRe = /(?:([\d.]+)\s*(GB|MB|TB)[^\/]*\/(?:Natural\s+)?(?:day|天)|daily\s+([\d.]+)\s*(GB|MB|TB))/i;
   const homeDailyMatch = homeDailyRe.exec(homeProductName);
   const homeIsDailyPlan = isDbDailyPlan || !!(homeDailyMatch);
   const homeDailyAmt = isDbDailyPlan && rawDataAmount != null && rawDataAmount > 0

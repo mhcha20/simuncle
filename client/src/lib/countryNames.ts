@@ -589,6 +589,12 @@ export function translatePlanName(
   result = result.replace(/-?CO-OTA\s+eSIM\s+Carrier\b/gi, "").trim();
   result = result.replace(/-?CO-OTA\b/gi, "").trim();
 
+  // Pre-process: drop supplier codes customers should not see
+  // e.g. "(RNR) AsiaLink ..." → "AsiaLink ...", "...(ai1)" → "...", "...-eSIM Carrier" → "..."
+  result = result.replace(/^\([A-Z]{2,5}\)\s*/, "").trim();
+  result = result.replace(/\s*\((?:ai|[A-Z]{1,3})\d{1,3}\)\s*$/i, "").trim();
+  result = result.replace(/\s*-?\s*eSIM\s+Carrier\s*$/i, "").trim();
+
   // Pre-process: normalize format
   // Remove parenthesised day count at end: "(7 Days)" / "(7 Day)" / "(7天)"
   result = result.replace(/\s*\(\d+\s*(Days?|天|日|일|วัน|日間)\)/gi, "").trim();

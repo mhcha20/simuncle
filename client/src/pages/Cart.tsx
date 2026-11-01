@@ -209,7 +209,7 @@ export default function Cart() {
                 String(item.productName ?? ""),
               );
               const cartItemName = String(item.productName ?? "");
-              const cartDailyRe = /(?:[\.\d]+\s*(?:GB|MB|TB)\/(?:Natural\s+)?day|daily\s+[\d.]+\s*(?:GB|MB|TB))/i;
+              const cartDailyRe = /(?:[\.\d]+\s*(?:GB|MB|TB)[^\/]*\/(?:Natural\s+)?(?:day|天)|daily\s+[\d.]+\s*(?:GB|MB|TB))/i;
               const cartIsDailyPlan = cartDailyRe.test(cartItemName);
               const cartDailyLabel = language === "en" ? "per day" : language === "zh-CN" ? "每日" : language === "ja" ? "毎日" : language === "ko" ? "매일" : language === "th" ? "ต่อวัน" : "每日";
               const itemCountries = (productData?.countries as { id: string; name: string }[]) ?? [];
