@@ -112,7 +112,7 @@ self.addEventListener('fetch', (event) => {
             '<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>SIM uncle</title></head>' +
             '<body style="font-family:-apple-system,Arial,sans-serif;text-align:center;padding:48px 24px;color:#374151">' +
             '<h2>連線失敗 Connection problem</h2><p>請檢查網絡後重試。Please check your connection and try again.</p>' +
-            '<p><a href="" onclick="location.reload();return false" style="color:#16a34a">重新載入 Reload</a></p></body></html>',
+            '<p><a href="" onclick="location.reload();return false" style="color:#0b6bbd">重新載入 Reload</a></p></body></html>',
             { status: 503, headers: { 'Content-Type': 'text/html; charset=utf-8' } }
           );
         })

@@ -397,19 +397,19 @@ export default function Cart() {
               </div>
 
               {/* New user promo code hint */}
-              <div className="bg-green-50 border border-green-200 rounded-lg px-3 py-2 mb-3 text-center">
-                <p className="text-xs text-green-700 leading-relaxed">
+              <div className="bg-orange-50 border border-orange-200 rounded-lg px-3 py-2 mb-3 text-center">
+                <p className="text-xs text-orange-800 leading-relaxed">
                   🎁 {language === "en"
-                    ? <>New user? Enter code <span className="font-bold tracking-widest bg-green-100 px-1.5 py-0.5 rounded text-green-800">NEW10</span> <span className="font-medium">on the Stripe checkout page</span> for 10% off</>
+                    ? <>New user? Enter code <span className="font-bold tracking-widest bg-white px-1.5 py-0.5 rounded text-[#c2491a] border border-orange-200">NEW10</span> <span className="font-medium">on the Stripe checkout page</span> for 10% off</>
                     : language === "zh-CN"
-                    ? <>新用户优惠：在 Stripe <span className="font-medium">付款页面</span>输入 <span className="font-bold tracking-widest bg-green-100 px-1.5 py-0.5 rounded text-green-800">NEW10</span> 享9折</>
+                    ? <>新用户优惠：在 Stripe <span className="font-medium">付款页面</span>输入 <span className="font-bold tracking-widest bg-white px-1.5 py-0.5 rounded text-[#c2491a] border border-orange-200">NEW10</span> 享9折</>
                     : language === "ja"
-                    ? <>新規ユーザー：Stripe <span className="font-medium">決済ページ</span>で <span className="font-bold tracking-widest bg-green-100 px-1.5 py-0.5 rounded text-green-800">NEW10</span> を入力して10%オフ</>
+                    ? <>新規ユーザー：Stripe <span className="font-medium">決済ページ</span>で <span className="font-bold tracking-widest bg-white px-1.5 py-0.5 rounded text-[#c2491a] border border-orange-200">NEW10</span> を入力して10%オフ</>
                     : language === "ko"
-                    ? <>신규 회원: Stripe <span className="font-medium">결제 페이지</span>에서 <span className="font-bold tracking-widest bg-green-100 px-1.5 py-0.5 rounded text-green-800">NEW10</span> 입력 시 10% 할인</>
+                    ? <>신규 회원: Stripe <span className="font-medium">결제 페이지</span>에서 <span className="font-bold tracking-widest bg-white px-1.5 py-0.5 rounded text-[#c2491a] border border-orange-200">NEW10</span> 입력 시 10% 할인</>
                     : language === "th"
-                    ? <>สมาชิกใหม่: ใส่ <span className="font-bold tracking-widest bg-green-100 px-1.5 py-0.5 rounded text-green-800">NEW10</span> ใน<span className="font-medium">หน้าชำระเงิน Stripe</span> ลด 10%</>
-                    : <>新用戶優惠：在 Stripe <span className="font-medium">付款頁面</span>輸入 <span className="font-bold tracking-widest bg-green-100 px-1.5 py-0.5 rounded text-green-800">NEW10</span> 享9折</>}
+                    ? <>สมาชิกใหม่: ใส่ <span className="font-bold tracking-widest bg-white px-1.5 py-0.5 rounded text-[#c2491a] border border-orange-200">NEW10</span> ใน<span className="font-medium">หน้าชำระเงิน Stripe</span> ลด 10%</>
+                    : <>新用戶優惠：在 Stripe <span className="font-medium">付款頁面</span>輸入 <span className="font-bold tracking-widest bg-white px-1.5 py-0.5 rounded text-[#c2491a] border border-orange-200">NEW10</span> 享9折</>}
                 </p>
               </div>
               <div className="flex items-start gap-2 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2.5 mb-3">

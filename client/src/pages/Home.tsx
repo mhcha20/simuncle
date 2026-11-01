@@ -705,10 +705,10 @@ export default function Home() {
                   <Wifi className="w-4 h-4" />
                   <span>{language === "en" ? "200+ countries & regions" : language === "zh-CN" ? "覆盖 200+ 国家及地区" : language === "ja" ? "200以上の国と地域" : language === "ko" ? "200개 이상 국가 및 지역" : language === "th" ? "ครอบคลุม 200+ ประเทศ" : "覆蓋 200+ 國家及地區"}</span>
                 </div>
-                <div className="inline-flex items-center gap-2 bg-amber-500/90 backdrop-blur-sm rounded-full px-4 py-1.5 text-sm">
+                <div className="inline-flex items-center gap-2 bg-[#ea622a]/95 backdrop-blur-sm rounded-full px-4 py-1.5 text-sm">
                   <span className="text-white">🎁</span>
                   <span className="text-white font-medium">{language === "en" ? "New user exclusive:" : language === "zh-CN" ? "新用户独家：" : language === "ja" ? "新規ユーザー限定：" : language === "ko" ? "신규 회원 전용：" : language === "th" ? "สำหรับสมาชิกใหม่：" : "新用戶專屬："}</span>
-                  <span className="font-bold tracking-widest text-amber-900 bg-white px-2 py-0.5 rounded-full text-xs">NEW10</span>
+                  <span className="font-bold tracking-widest text-[#c2491a] bg-white px-2 py-0.5 rounded-full text-xs">NEW10</span>
                   <span className="text-white font-medium">{language === "en" ? "10% off" : language === "ja" ? "10%割引" : language === "ko" ? "10% 할인" : language === "th" ? "ลด 10%" : "享9折"}</span>
                 </div>
               </div>

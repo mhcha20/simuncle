@@ -62,73 +62,73 @@ function buildExpiryReminderHtml(params: {
     "zh-TW": {
       subtitle: "eSIM 即將到期提醒",
       title: "⏰ 您的 eSIM 即將到期",
-      body: `親愛的 ${params.customerName}，您的 eSIM 方案將於 <strong style="color:#16a34a;">${expiryStr}</strong>（${daysLeft} 天後）到期。`,
+      body: `親愛的 ${params.customerName}，您的 eSIM 方案將於 <strong style="color:#0b6bbd;">${expiryStr}</strong>（${daysLeft} 天後）到期。`,
       orderNo: "訂單編號",
       plan: "方案",
       expiry: "到期日",
       ctaText: "立即購買續期方案，保持網路暢通！",
       ctaBtn: "🛒 立即購買 eSIM 方案",
-      trackText: `您也可以前往 <a href="https://simuncle.com/track-order?orderId=${params.orderId}" style="color:#16a34a;">訂單查詢頁面</a> 查看目前 eSIM 狀態。`,
+      trackText: `您也可以前往 <a href="https://simuncle.com/track-order?orderId=${params.orderId}" style="color:#0b6bbd;">訂單查詢頁面</a> 查看目前 eSIM 狀態。`,
       contact: "如有疑問，請聯絡 SIM uncle 客服",
     },
     "zh-CN": {
       subtitle: "eSIM 即将到期提醒",
       title: "⏰ 您的 eSIM 即将到期",
-      body: `亲爱的 ${params.customerName}，您的 eSIM 方案将于 <strong style="color:#16a34a;">${expiryStr}</strong>（${daysLeft} 天后）到期。`,
+      body: `亲爱的 ${params.customerName}，您的 eSIM 方案将于 <strong style="color:#0b6bbd;">${expiryStr}</strong>（${daysLeft} 天后）到期。`,
       orderNo: "订单编号",
       plan: "方案",
       expiry: "到期日",
       ctaText: "立即购买续期方案，保持网络畅通！",
       ctaBtn: "🛒 立即购买 eSIM 方案",
-      trackText: `您也可以前往 <a href="https://simuncle.com/track-order?orderId=${params.orderId}" style="color:#16a34a;">订单查询页面</a> 查看目前 eSIM 状态。`,
+      trackText: `您也可以前往 <a href="https://simuncle.com/track-order?orderId=${params.orderId}" style="color:#0b6bbd;">订单查询页面</a> 查看目前 eSIM 状态。`,
       contact: "如有疑问，请联系 SIM uncle 客服",
     },
     "en": {
       subtitle: "eSIM Expiry Reminder",
       title: "⏰ Your eSIM is Expiring Soon",
-      body: `Dear ${params.customerName}, your eSIM plan will expire on <strong style="color:#16a34a;">${expiryStr}</strong> (in ${daysLeft} day${daysLeft > 1 ? 's' : ''}).`,
+      body: `Dear ${params.customerName}, your eSIM plan will expire on <strong style="color:#0b6bbd;">${expiryStr}</strong> (in ${daysLeft} day${daysLeft > 1 ? 's' : ''}).`,
       orderNo: "Order No.",
       plan: "Plan",
       expiry: "Expiry Date",
       ctaText: "Renew your plan now to stay connected!",
       ctaBtn: "🛒 Buy eSIM Plan Now",
-      trackText: `You can also visit the <a href="https://simuncle.com/track-order?orderId=${params.orderId}" style="color:#16a34a;">Order Tracking Page</a> to check your eSIM status.`,
+      trackText: `You can also visit the <a href="https://simuncle.com/track-order?orderId=${params.orderId}" style="color:#0b6bbd;">Order Tracking Page</a> to check your eSIM status.`,
       contact: "For any questions, contact SIM uncle support",
     },
     "ja": {
       subtitle: "eSIM 有効期限切れお知らせ",
       title: "⏰ eSIM の有効期限が近づいています",
-      body: `${params.customerName} 様、eSIM プランは <strong style="color:#16a34a;">${expiryStr}</strong>（${daysLeft} 日後）に有効期限が切れます。`,
+      body: `${params.customerName} 様、eSIM プランは <strong style="color:#0b6bbd;">${expiryStr}</strong>（${daysLeft} 日後）に有効期限が切れます。`,
       orderNo: "注文番号",
       plan: "プラン",
       expiry: "有効期限",
       ctaText: "今すぐ更新プランを購入して接続を維持しましょう！",
       ctaBtn: "🛒 eSIM プランを購入する",
-      trackText: `<a href="https://simuncle.com/track-order?orderId=${params.orderId}" style="color:#16a34a;">注文確認ページ</a> で現在の eSIM 状態をご確認いただけます。`,
+      trackText: `<a href="https://simuncle.com/track-order?orderId=${params.orderId}" style="color:#0b6bbd;">注文確認ページ</a> で現在の eSIM 状態をご確認いただけます。`,
       contact: "ご不明な点は SIM uncle サポートまでお問い合わせください",
     },
     "ko": {
       subtitle: "eSIM 만료 알림",
       title: "⏰ eSIM 이 곳 만료됩니다",
-      body: `${params.customerName} 님, eSIM 플랜이 <strong style="color:#16a34a;">${expiryStr}</strong>에 (${daysLeft}일 후) 만료됩니다.`,
+      body: `${params.customerName} 님, eSIM 플랜이 <strong style="color:#0b6bbd;">${expiryStr}</strong>에 (${daysLeft}일 후) 만료됩니다.`,
       orderNo: "주문 번호",
       plan: "플랜",
       expiry: "만료일",
       ctaText: "지금 갱신 플랜을 구매하여 연결을 유지하세요!",
       ctaBtn: "🛒 eSIM 플랜 구매하기",
-      trackText: `<a href="https://simuncle.com/track-order?orderId=${params.orderId}" style="color:#16a34a;">주문 조회 페이지</a>에서 현재 eSIM 상태를 확인하세요.`,
+      trackText: `<a href="https://simuncle.com/track-order?orderId=${params.orderId}" style="color:#0b6bbd;">주문 조회 페이지</a>에서 현재 eSIM 상태를 확인하세요.`,
       contact: "문의사항이 있으시면 SIM uncle 고객센터로 연락해 주세요",
     },
     "th": {
       subtitle: "แจ้งเตือน eSIM ใกล้หมดอายุ",
       title: "⏰ eSIM ของคุณกำลังจะหมดอายุ",
-      body: `${params.customerName} eSIM แพ็กเกจของคุณจะหมดอายุในวันที่ <strong style="color:#16a34a;">${expiryStr}</strong> (อีก ${daysLeft} วัน)`,
+      body: `${params.customerName} eSIM แพ็กเกจของคุณจะหมดอายุในวันที่ <strong style="color:#0b6bbd;">${expiryStr}</strong> (อีก ${daysLeft} วัน)`,
       orderNo: "หมายเลขคำสั่งซื้อ",
       plan: "แพ็กเกจ",
       expiry: "วันหมดอายุ",
       ctaText: "ต่ออายุแผนตอนนี้เพื่อให้เชื่อมต่อได้ต่อเนื่อง!",
       ctaBtn: "🛒 ซื้อแผน eSIM ตอนนี้",
-      trackText: `เยี่ยมชม <a href="https://simuncle.com/track-order?orderId=${params.orderId}" style="color:#16a34a;">หน้าติดตามคำสั่งซื้อ</a> เพื่อตรวจสอบสถานะ eSIM ปัจจุบัน`,
+      trackText: `เยี่ยมชม <a href="https://simuncle.com/track-order?orderId=${params.orderId}" style="color:#0b6bbd;">หน้าติดตามคำสั่งซื้อ</a> เพื่อตรวจสอบสถานะ eSIM ปัจจุบัน`,
       contact: "หากมีคำถาม กรุณาติดต่อฝ่ายสนับสนุน SIM uncle",
     },
   };
@@ -141,9 +141,9 @@ function buildExpiryReminderHtml(params: {
 <body style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f3f4f6;margin:0;padding:20px;">
   <div style="max-width:560px;margin:0 auto;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 4px 6px rgba(0,0,0,0.07);">
     <!-- Header -->
-    <div style="background:linear-gradient(135deg,#dcfce7,#bbf7d0);padding:28px 24px;text-align:center;">
+    <div style="background:linear-gradient(135deg,#dbeafe,#bfdbfe);padding:28px 24px;text-align:center;">
       <img src="https://simuncle.com/manus-storage/logo-full-transparent_061e610c.png" alt="SIM uncle" width="160" height="auto" style="display:block;margin:0 auto 12px auto;max-width:160px;" />
-      <p style="color:#15803d;margin:0;font-size:14px;">${t.subtitle}</p>
+      <p style="color:#0a5596;margin:0;font-size:14px;">${t.subtitle}</p>
     </div>
     <!-- Body -->
     <div style="padding:24px;">
@@ -163,15 +163,15 @@ function buildExpiryReminderHtml(params: {
           </tr>
           <tr>
             <td style="color:#6b7280;font-size:13px;padding:4px 0;">${t.expiry}</td>
-            <td style="color:#16a34a;font-weight:700;text-align:right;">${expiryStr}</td>
+            <td style="color:#0b6bbd;font-weight:700;text-align:right;">${expiryStr}</td>
           </tr>
         </table>
       </div>
 
       <!-- CTA -->
-      <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:12px;padding:20px;text-align:center;margin-bottom:20px;">
-        <p style="color:#15803d;margin:0 0 12px 0;font-size:14px;">${t.ctaText}</p>
-        <a href="https://simuncle.com/products" style="display:inline-block;background:#16a34a;color:#fff;text-decoration:none;padding:12px 28px;border-radius:8px;font-weight:600;font-size:15px;">${t.ctaBtn}</a>
+      <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:12px;padding:20px;text-align:center;margin-bottom:20px;">
+        <p style="color:#0a5596;margin:0 0 12px 0;font-size:14px;">${t.ctaText}</p>
+        <a href="https://simuncle.com/products" style="display:inline-block;background:#0b6bbd;color:#fff;text-decoration:none;padding:12px 28px;border-radius:8px;font-weight:600;font-size:15px;">${t.ctaBtn}</a>
       </div>
 
       <p style="color:#9ca3af;font-size:12px;text-align:center;margin:0;">${t.trackText}</p>

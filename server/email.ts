@@ -300,11 +300,11 @@ function buildOrderConfirmationHtml(data: OrderEmailData): string {
 
   const qrSection = data.lpaString
     ? `
-    <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:12px;padding:20px;margin:20px 0;text-align:center;">
-      <h3 style="color:#15803d;margin:0 0 12px 0;">${i.esimReady}</h3>
+    <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:12px;padding:20px;margin:20px 0;text-align:center;">
+      <h3 style="color:#0a5596;margin:0 0 12px 0;">${i.esimReady}</h3>
       <p style="color:#374151;margin:0 0 12px 0;font-size:14px;">${i.scanQr}</p>
       <img src="${qrCodeUrl}" alt="eSIM QR Code" width="200" height="200" style="display:block;margin:0 auto 12px auto;border:1px solid #d1fae5;border-radius:8px;" />
-      <a href="https://simuncle.com/track-order?orderId=${data.orderId}" style="display:inline-block;background:#16a34a;color:#fff;text-decoration:none;padding:10px 24px;border-radius:8px;font-weight:600;margin-top:4px;">${i.viewOrder}</a>
+      <a href="https://simuncle.com/track-order?orderId=${data.orderId}" style="display:inline-block;background:#0b6bbd;color:#fff;text-decoration:none;padding:10px 24px;border-radius:8px;font-weight:600;margin-top:4px;">${i.viewOrder}</a>
     </div>
     <div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;padding:16px;margin:16px 0;">
       <p style="color:#6b7280;font-size:12px;font-weight:600;margin:0 0 8px 0;">${i.manualTitle}</p>
@@ -324,15 +324,15 @@ function buildOrderConfirmationHtml(data: OrderEmailData): string {
 <body style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f3f4f6;margin:0;padding:20px;">
   <div style="max-width:560px;margin:0 auto;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 4px 6px rgba(0,0,0,0.07);">
     <!-- Header -->
-    <div style="background:linear-gradient(135deg,#dcfce7,#bbf7d0);padding:28px 24px;text-align:center;">
+    <div style="background:linear-gradient(135deg,#dbeafe,#bfdbfe);padding:28px 24px;text-align:center;">
       <img src="https://simuncle.com/manus-storage/logo-full-transparent_061e610c.png" alt="SIM​uncle" width="160" height="auto" style="display:block;margin:0 auto 12px auto;max-width:160px;" />
-      <p style="color:#15803d;margin:0;font-size:14px;">${i.globalEsim}</p>
+      <p style="color:#0a5596;margin:0;font-size:14px;">${i.globalEsim}</p>
     </div>
     <!-- Body -->
     <div style="padding:24px;">
       <h2 style="color:#111827;margin:0 0 8px 0;">${i.paymentSuccess}</h2>
       <p style="color:#6b7280;margin:0 0 20px 0;">${i.greeting}</p>
-      <p style="color:#6b7280;font-size:13px;margin:0 0 16px 0;">${i.trackOrderText} <a href="https://simuncle.com/track-order?orderId=${data.orderId}" style="color:#16a34a;font-weight:600;">${i.trackOrder}</a> ${i.trackOrderText2}</p>
+      <p style="color:#6b7280;font-size:13px;margin:0 0 16px 0;">${i.trackOrderText} <a href="https://simuncle.com/track-order?orderId=${data.orderId}" style="color:#0b6bbd;font-weight:600;">${i.trackOrder}</a> ${i.trackOrderText2}</p>
 
       <!-- Order Summary -->
       <div style="border:1px solid #e5e7eb;border-radius:12px;padding:16px;margin-bottom:16px;">
@@ -347,7 +347,7 @@ function buildOrderConfirmationHtml(data: OrderEmailData): string {
           </tr>
           <tr>
             <td style="color:#6b7280;font-size:13px;padding:4px 0;">${i.amount}</td>
-            <td style="color:#16a34a;font-weight:700;text-align:right;font-size:16px;">${data.totalAmount}</td>
+            <td style="color:#0b6bbd;font-weight:700;text-align:right;font-size:16px;">${data.totalAmount}</td>
           </tr>
         </table>
       </div>
@@ -356,13 +356,13 @@ function buildOrderConfirmationHtml(data: OrderEmailData): string {
 
       <!-- Track Order Button -->
       <div style="text-align:center;margin:20px 0 8px 0;">
-        <a href="https://simuncle.com/track-order?orderId=${data.orderId}" style="display:inline-block;background:#f0fdf4;color:#16a34a;text-decoration:none;padding:10px 24px;border-radius:8px;font-weight:600;border:1px solid #bbf7d0;font-size:14px;">${i.myOrderBtn}${data.orderId}</a>
+        <a href="https://simuncle.com/track-order?orderId=${data.orderId}" style="display:inline-block;background:#eff6ff;color:#0b6bbd;text-decoration:none;padding:10px 24px;border-radius:8px;font-weight:600;border:1px solid #bfdbfe;font-size:14px;">${i.myOrderBtn}${data.orderId}</a>
       </div>
 
       <!-- How to install -->
       <div style="margin-top:24px;border:1px solid #e5e7eb;border-radius:12px;overflow:hidden;">
-        <div style="background:#f0fdf4;padding:14px 16px;border-bottom:1px solid #d1fae5;">
-          <h3 style="color:#15803d;font-size:15px;font-weight:700;margin:0;">${i.installTitle}</h3>
+        <div style="background:#eff6ff;padding:14px 16px;border-bottom:1px solid #d1fae5;">
+          <h3 style="color:#0a5596;font-size:15px;font-weight:700;margin:0;">${i.installTitle}</h3>
           <p style="color:#6b7280;font-size:12px;margin:6px 0 0 0;">${i.installNote}</p>
         </div>
         <div style="padding:16px;">
@@ -376,7 +376,7 @@ function buildOrderConfirmationHtml(data: OrderEmailData): string {
           <ol style="color:#6b7280;font-size:13px;margin:0 0 16px 0;padding-left:20px;line-height:1.8;">
             ${i.androidSteps.map((s: string) => `<li>${s}</li>`).join('')}
           </ol>
-          <a href="https://simuncle.com/how-to-install" style="display:inline-block;color:#16a34a;font-size:13px;font-weight:600;text-decoration:none;">${i.fullGuide}</a>
+          <a href="https://simuncle.com/how-to-install" style="display:inline-block;color:#0b6bbd;font-size:13px;font-weight:600;text-decoration:none;">${i.fullGuide}</a>
         </div>
       </div>
 
@@ -384,7 +384,7 @@ function buildOrderConfirmationHtml(data: OrderEmailData): string {
       <div style="margin-top:20px;border:1px solid #e5e7eb;border-radius:12px;padding:16px;">
         <p style="color:#374151;font-size:13px;font-weight:700;margin:0 0 10px 0;">${i.faqTitle}</p>
         <table style="width:100%;border-collapse:collapse;">
-          ${i.faqItems.map((item: string, idx: number) => `<tr><td style="padding:6px 0;${idx < i.faqItems.length - 1 ? 'border-bottom:1px solid #f3f4f6;' : ''}"><a href="${idx === i.faqItems.length - 1 ? 'https://wa.me/85298885159' : 'https://simuncle.com/how-to-install'}" style="color:#16a34a;font-size:13px;text-decoration:none;">${item}</a></td></tr>`).join('')}
+          ${i.faqItems.map((item: string, idx: number) => `<tr><td style="padding:6px 0;${idx < i.faqItems.length - 1 ? 'border-bottom:1px solid #f3f4f6;' : ''}"><a href="${idx === i.faqItems.length - 1 ? 'https://wa.me/85298885159' : 'https://simuncle.com/how-to-install'}" style="color:#0b6bbd;font-size:13px;text-decoration:none;">${item}</a></td></tr>`).join('')}
         </table>
       </div>
     </div>
@@ -484,7 +484,7 @@ export async function sendCustomEmailToCustomer(params: {
 }): Promise<boolean> {
   const ctaBlock = params.ctaUrl
     ? `<div style="text-align:center;margin:28px 0;">
-  <a href="${params.ctaUrl}" style="display:inline-block;background:#16a34a;color:#fff;font-size:16px;font-weight:bold;padding:14px 32px;border-radius:8px;text-decoration:none;">${params.ctaText ?? params.ctaUrl}</a>
+  <a href="${params.ctaUrl}" style="display:inline-block;background:#0b6bbd;color:#fff;font-size:16px;font-weight:bold;padding:14px 32px;border-radius:8px;text-decoration:none;">${params.ctaText ?? params.ctaUrl}</a>
 </div>`
     : "";
 
@@ -495,9 +495,9 @@ export async function sendCustomEmailToCustomer(params: {
 <body style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;background:#f3f4f6;margin:0;padding:20px;">
 <div style="max-width:560px;margin:0 auto;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 4px 6px rgba(0,0,0,0.07);">
   <!-- Header with Logo -->
-  <div style="background:linear-gradient(135deg,#dcfce7,#bbf7d0);padding:28px 24px;text-align:center;">
+  <div style="background:linear-gradient(135deg,#dbeafe,#bfdbfe);padding:28px 24px;text-align:center;">
     <img src="https://simuncle.com/manus-storage/logo-full-transparent_061e610c.png" alt="SIM uncle" width="160" height="auto" style="display:block;margin:0 auto 8px auto;max-width:160px;" />
-    <p style="color:#15803d;margin:0;font-size:13px;">全球 eSIM 即買即用</p>
+    <p style="color:#0a5596;margin:0;font-size:13px;">全球 eSIM 即買即用</p>
   </div>
   <!-- Body -->
   <div style="padding:28px 24px;">
@@ -659,7 +659,7 @@ function buildTerminationHtml(data: TerminationEmailData): string {
 
       <!-- CTA -->
       <div style="text-align:center;margin-bottom:8px;">
-        <a href="https://simuncle.com/products" style="display:inline-block;background:#16a34a;color:#fff;text-decoration:none;padding:12px 28px;border-radius:8px;font-weight:600;font-size:15px;">${i.ctaText}</a>
+        <a href="https://simuncle.com/products" style="display:inline-block;background:#0b6bbd;color:#fff;text-decoration:none;padding:12px 28px;border-radius:8px;font-weight:600;font-size:15px;">${i.ctaText}</a>
       </div>
     </div>
     <!-- Footer -->
@@ -819,9 +819,9 @@ function buildDataExhaustedHtml(data: DataExhaustedEmailData): string {
     const planRows = data.topupPlans.map(p => `
       <tr>
         <td style="padding:8px 0;color:#111827;font-size:13px;">${p.name}${p.dataLabel ? ` <span style="color:#6b7280;">(${p.dataLabel})</span>` : ""}</td>
-        <td style="padding:8px 0;color:#16a34a;font-weight:600;text-align:right;font-size:13px;">HK$${p.priceHkd}</td>
+        <td style="padding:8px 0;color:#0b6bbd;font-weight:600;text-align:right;font-size:13px;">HK$${p.priceHkd}</td>
         <td style="padding:8px 0;text-align:right;">
-          <a href="https://simuncle.com/orders" style="display:inline-block;background:#16a34a;color:#fff;text-decoration:none;padding:5px 12px;border-radius:6px;font-size:12px;font-weight:600;">${t.topupBtn}</a>
+          <a href="https://simuncle.com/orders" style="display:inline-block;background:#0b6bbd;color:#fff;text-decoration:none;padding:5px 12px;border-radius:6px;font-size:12px;font-weight:600;">${t.topupBtn}</a>
         </td>
       </tr>`).join("");
 
@@ -848,7 +848,7 @@ function buildDataExhaustedHtml(data: DataExhaustedEmailData): string {
         <p style="color:#991b1b;margin:0;font-size:13px;line-height:1.6;">${t.noTopupBody}</p>
       </div>
       <div style="text-align:center;margin-bottom:20px;">
-        <a href="https://simuncle.com/products" style="display:inline-block;background:#16a34a;color:#fff;text-decoration:none;padding:12px 28px;border-radius:8px;font-weight:600;font-size:15px;">${t.buyNewBtn}</a>
+        <a href="https://simuncle.com/products" style="display:inline-block;background:#0b6bbd;color:#fff;text-decoration:none;padding:12px 28px;border-radius:8px;font-weight:600;font-size:15px;">${t.buyNewBtn}</a>
       </div>`;
   }
 
