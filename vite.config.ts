@@ -25,7 +25,7 @@ export default defineConfig({
     rollupOptions: {
       output: {
         manualChunks(id) {
-          // Split countryNames into its own chunk — it's 1.2MB and not needed for initial render
+          // Split countryNames (and the trimmed zh dictionary it pulls in) into its own chunk
           if (id.includes('client/src/lib/countryNames')) {
             return 'country-data';
           }
