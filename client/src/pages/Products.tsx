@@ -1,5 +1,5 @@
 import { useLanguage } from "@/contexts/LanguageContext";
-import { shortPlanName } from "@/lib/planName";
+import { dataFromName, shortPlanName } from "@/lib/planName";
 import { useCurrency } from "@/hooks/useCurrency";
 import { PageSEO } from "@/components/SEO";
 import { translateCountry, translateRegion, translatePlanName, translateSearchQuery, countryNameMap, getCountriesByRegion } from "@/lib/countryNames";
@@ -108,7 +108,7 @@ function ProductCard({ product, onAddToCart, onBuyNow, buyNowPending = false, ma
     ? dailyLabel
     : rawDataAmount != null && rawDataAmount > 0
     ? `${rawDataAmount}${dataUnit}`
-    : (language === "en" ? "N/A" : "N/A");
+    : (dataFromName(product.name) ?? "N/A");
   const validityDays = Number(product.validityDays ?? 0);
   const countries = (product.countries as { id: string; name: string }[]) ?? [];
   const customName = (product as Record<string, unknown>).customName as string | null | undefined;

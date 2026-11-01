@@ -31,3 +31,13 @@ describe("shortPlanName", () => {
     expect(shortPlanName({ name: "Mystery plan", countries: C("PH"), validityDays: 5, dataAmount: null, planType: "Fixed" }, "zh-TW")).toBeNull();
   });
 });
+
+describe("dataFromName", () => {
+  it("reads fixed amounts and ignores per-day ones", async () => {
+    const { dataFromName } = await import("../client/src/lib/planName");
+    expect(dataFromName("Italy-fixed 5GB (7 Days)")).toBe("5GB");
+    expect(dataFromName("United Kingdom 1GB/3 days(Valid for 60 days)(ai1)")).toBe("1GB");
+    expect(dataFromName("Singapore-500MB/Natural day")).toBeNull();
+    expect(dataFromName("Philippines Short Trip")).toBeNull();
+  });
+});

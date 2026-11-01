@@ -1,5 +1,5 @@
 import { useLanguage } from "@/contexts/LanguageContext";
-import { shortPlanName } from "@/lib/planName";
+import { dataFromName, shortPlanName } from "@/lib/planName";
 import { trackSearch } from "@/lib/gtm";
 import { PageSEO } from "@/components/SEO";
 import { translateCountry, translateRegion, translatePlanName, countryNameMap } from "@/lib/countryNames";
@@ -35,13 +35,19 @@ import { encodeProductSlug } from "@shared/productSlug";
 import { HowItWorks } from "@/components/HowItWorks";
 
 const REGION_CONFIG = [
-  { key: "Asia", img: "/manus-storage/region-asia_1405db75.webp" },
-  { key: "Europe", img: "/manus-storage/region-europe_5a2fa9b6.webp" },
-  { key: "Americas", img: "/manus-storage/region-americas_25af5dc0.webp" },
-  { key: "Middle East", img: "/manus-storage/region-middle-east_76c28d37.webp" },
-  { key: "Africa", img: "/manus-storage/region-africa_90ede2f9.webp" },
-  { key: "Oceania", img: "/manus-storage/region-oceania_f31a2c90.webp" },
+  { key: "Asia", img: "/destinations/region-asia.webp" },
+  { key: "Europe", img: "/destinations/region-europe.webp" },
+  { key: "Americas", img: "/destinations/region-americas.webp" },
+  { key: "Middle East", img: "/destinations/region-middle-east.webp" },
+  { key: "Africa", img: "/destinations/region-africa.webp" },
+  { key: "Oceania", img: "/destinations/region-oceania.webp" },
 ];
+
+// Destination photos (Unsplash, see client/public/destinations/CREDITS.md) for single-country plan cards
+const DESTINATION_PHOTOS: Record<string, string> = {
+  JP: "/destinations/jp.webp", KR: "/destinations/kr.webp", TH: "/destinations/th.webp", GB: "/destinations/gb.webp",
+  US: "/destinations/us.webp", AU: "/destinations/au.webp", FR: "/destinations/fr.webp", TW: "/destinations/tw.webp",
+};
 
 const REGION_TRANSLATION_KEY: Record<string, keyof ReturnType<typeof useLanguage>["t"]["regions"]> = {
   Asia: "asia",
@@ -52,7 +58,7 @@ const REGION_TRANSLATION_KEY: Record<string, keyof ReturnType<typeof useLanguage
   Oceania: "oceania",
 };
 
-function ProductCard({ product, markupPct = 0 }: { product: Record<string, unknown>; markupPct?: number; hkdRate?: number }) {
+function ProductCard({ product, markupPct = 0, photo }: { product: Record<string, unknown>; markupPct?: number; hkdRate?: number; photo?: string }) {
   const { t, language } = useLanguage();
   const { formatPrice } = useCurrency();
   const topUpAvailable = Boolean(product.topUpAvailable);
@@ -83,7 +89,7 @@ function ProductCard({ product, markupPct = 0 }: { product: Record<string, unkno
     ? homeDailyLabel
     : rawDataAmount != null && rawDataAmount > 0
     ? `${rawDataAmount} ${dataUnit}`
-    : (language === "en" ? "N/A" : "N/A");
+    : (dataFromName(product.name) ?? "N/A");
   // TGT unlimited: daily plan with positive dataAmount (high-speed cap + unlimited reduced speed)
   const isTgtUnlimited = isTgt && isDbDailyPlan && rawDataAmount != null && rawDataAmount > 0;
   // Parse throttle speed from product name
@@ -111,9 +117,14 @@ function ProductCard({ product, markupPct = 0 }: { product: Record<string, unkno
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="bg-white rounded-2xl border border-border shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden group h-full"
+      className="bg-white rounded-2xl border border-border shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden group h-full flex flex-col"
     >
-      <div className="p-5 flex flex-col h-full">
+      {photo && (
+        <div className="aspect-[16/7] overflow-hidden bg-muted">
+          <img src={photo} alt="" width={800} height={350} loading="lazy" decoding="async" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+        </div>
+      )}
+      <div className="p-5 flex flex-col flex-1">
         {/* Header */}
         <div className="flex items-start justify-between mb-3">
           <div className="flex-1 min-w-0">
@@ -767,11 +778,10 @@ export default function Home() {
                   transition={{ delay: i * 0.05 }}
                 >
                   <Link href={`/products?region=${encodeURIComponent(region.key)}`}>
-                    <div className="group cursor-pointer rounded-2xl border border-border bg-white hover:border-primary/30 hover:shadow-md transition-all duration-200 p-4 text-center">
-                      <div className="w-12 h-12 mx-auto rounded-xl overflow-hidden mb-3 group-hover:scale-110 transition-transform shadow-sm">
-                          <img src={region.img} alt={region.key} width={400} height={300} loading="lazy" decoding="async" className="w-full h-full object-cover" />
-                        </div>
-                      <p className="text-sm font-medium text-foreground">{label}</p>
+                    <div className="group relative cursor-pointer rounded-2xl overflow-hidden aspect-[4/3] shadow-sm hover:shadow-md transition-shadow duration-200">
+                      <img src={region.img} alt={label} width={600} height={450} loading="lazy" decoding="async" className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/65 via-black/10 to-transparent" />
+                      <p className="absolute left-3 bottom-2.5 text-base font-semibold text-white drop-shadow">{label}</p>
                     </div>
                   </Link>
                 </motion.div>
@@ -812,7 +822,16 @@ export default function Home() {
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-stretch">
               {(productsQuery.data?.products ?? []).map((product) => (
-                <ProductCard key={String(product.productId)} product={product as Record<string, unknown>} markupPct={markupPct} hkdRate={hkdRate} />
+                <ProductCard
+                  key={String(product.productId)}
+                  product={product as Record<string, unknown>}
+                  markupPct={markupPct}
+                  hkdRate={hkdRate}
+                  photo={(() => {
+                    const cs = (product as { countries?: { id: string }[] }).countries ?? [];
+                    return cs.length === 1 ? DESTINATION_PHOTOS[cs[0].id] : undefined;
+                  })()}
+                />
               ))}
             </div>
           )}

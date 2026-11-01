@@ -220,8 +220,11 @@ const productsRouter = router({
     const codes = featuredCountryCodes(await getSetting("popular_countries"));
     const picks = await Promise.all(
       codes.map(async (code) => {
-        const { products } = await getProducts({ countries: [code], limit: 100, sortBy: "price_asc" });
-        return pickFeaturedPlan(products);
+        // Prefer the destination's own plans (5-10 days); fall back to anything covering it.
+        const typical = await getProducts({ countries: [code], singleCountry: true, minDays: 5, maxDays: 10, limit: 100, sortBy: "price_asc" });
+        const single = typical.products.length > 0 ? typical : await getProducts({ countries: [code], singleCountry: true, limit: 100, sortBy: "price_asc" });
+        const pool = single.products.length > 0 ? single : await getProducts({ countries: [code], limit: 100, sortBy: "price_asc" });
+        return pickFeaturedPlan(pool.products);
       })
     );
     return { products: picks.filter((p): p is NonNullable<typeof p> => p !== null) };

@@ -102,3 +102,9 @@ export function shortPlanName(p: PlanLike | null | undefined, lang: Language): s
   const prefix = /^\s*top\s*-?\s*up\b/i.test(name) ? `${w.topUp} ` : "";
   return `${prefix}${dest} ${w.days(days)} ${data}`;
 }
+
+/** Fixed data amount written in a plan name ("Italy-fixed 5GB (7 Days)" -> "5GB"), ignoring per-day amounts. */
+export function dataFromName(name: unknown): string | null {
+  const m = FIXED_RE.exec(String(name ?? ""));
+  return m ? amountLabel(m[1], m[2]) : null;
+}
