@@ -39,21 +39,40 @@ describe("invokeLLM (Anthropic)", () => {
     expect(((init as RequestInit).headers as Record<string, string>)["x-api-key"]).toBe("test-key");
   });
 
-  it("uses a forced tool call for json_schema and returns its input as JSON text", async () => {
+  it("asks for json_schema output through output_config.format, never a forced tool call", async () => {
     const fetchMock = vi.spyOn(globalThis, "fetch").mockResolvedValue(
-      ok({ id: "m2", model: "x", content: [{ type: "tool_use", input: { category: "news" } }], stop_reason: "tool_use" }),
+      ok({ id: "m2", model: "x", content: [{ type: "thinking", thinking: "" }, { type: "text", text: '{"category":"news"}' }], stop_reason: "end_turn" }),
     );
     const res = await invokeLLM({
       messages: [{ role: "user", content: "classify" }],
       response_format: {
         type: "json_schema",
-        json_schema: { name: "cat", schema: { type: "object", properties: { category: { type: "string" } } } },
+        json_schema: { name: "cat", schema: { type: "object", properties: { category: { type: "string", maxLength: 9 } } } },
       },
     });
     expect(JSON.parse(res.choices[0].message.content)).toEqual({ category: "news" });
     const body = JSON.parse((fetchMock.mock.calls[0][1] as RequestInit).body as string);
-    expect(body.tool_choice).toEqual({ type: "tool", name: "cat" });
-    expect(body.tools[0].input_schema.type).toBe("object");
+    expect(body.tool_choice).toBeUndefined();
+    expect(body.tools).toBeUndefined();
+    expect(body.output_config.format.type).toBe("json_schema");
+    expect(body.output_config.format.schema).toEqual({
+      type: "object", properties: { category: { type: "string" } }, additionalProperties: false,
+    });
+  });
+
+  it("retries with a JSON instruction when the schema is refused", async () => {
+    const fetchMock = vi.spyOn(globalThis, "fetch")
+      .mockResolvedValueOnce(new Response('{"error":{"message":"output_config.format: schema not supported"}}', { status: 400, statusText: "Bad Request" }))
+      .mockResolvedValueOnce(ok({ id: "m3", model: "x", content: [{ type: "text", text: '{"category":"tips"}' }], stop_reason: "end_turn" }));
+    vi.spyOn(console, "warn").mockImplementation(() => {});
+    const res = await invokeLLM({
+      messages: [{ role: "user", content: "classify" }],
+      response_format: { type: "json_schema", json_schema: { name: "cat", schema: { type: "object", properties: { category: { type: "string" } } } } },
+    });
+    expect(JSON.parse(res.choices[0].message.content)).toEqual({ category: "tips" });
+    const second = JSON.parse((fetchMock.mock.calls[1][1] as RequestInit).body as string);
+    expect(second.output_config).toBeUndefined();
+    expect(second.system).toMatch(/JSON schema/);
   });
 
   it("retries on 429 then succeeds", async () => {

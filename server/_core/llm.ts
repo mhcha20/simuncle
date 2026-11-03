@@ -96,13 +96,43 @@ async function invokeAnthropic(params: InvokeParams, apiKey: string): Promise<In
   }
   if (system.length > 0) payload.system = system.join("\n\n");
 
-  // Structured output: force one tool call whose input must match the schema,
-  // then hand that input back as the JSON text callers expect.
+  // Structured output through output_config.format (JSON schema). Current models reject forced
+  // tool calls (tool_choice "tool"/"any"), which this used before. If the API refuses the schema,
+  // retry once with a plain "reply with JSON" instruction; callers parse and validate the text.
   if (schema) {
-    payload.tools = [{ name: schema.name, description: "Return the result in this structure.", input_schema: schema.schema }];
-    payload.tool_choice = { type: "tool", name: schema.name };
+    payload.output_config = { format: { type: "json_schema", schema: strictSchema(schema.schema) } };
   }
 
+  try {
+    return await sendAnthropic(payload, apiKey);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    if (!schema || !/\b400\b/.test(message) || !/output_config|schema|format/i.test(message)) throw error;
+    console.warn(`[LLM] Schema output refused, retrying with a JSON instruction: ${message.slice(0, 200)}`);
+    const { output_config: _unused, ...rest } = payload;
+    const instruction = `Respond with a single valid JSON object matching this JSON schema, and nothing else:\n${JSON.stringify(schema.schema)}`;
+    rest.system = [rest.system, instruction].filter(Boolean).join("\n\n");
+    return sendAnthropic(rest, apiKey);
+  }
+}
+
+/** Objects in a JSON schema must say additionalProperties: false for structured outputs. */
+export function strictSchema(node: unknown): unknown {
+  if (Array.isArray(node)) return node.map(strictSchema);
+  if (!node || typeof node !== "object") return node;
+  const out: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(node as Record<string, unknown>)) {
+    // Numeric and length limits are not accepted by structured outputs
+    if (["minimum", "maximum", "exclusiveMinimum", "exclusiveMaximum", "multipleOf", "minLength", "maxLength", "minItems", "maxItems"].includes(key)) continue;
+    out[key] = key === "properties" && value && typeof value === "object"
+      ? Object.fromEntries(Object.entries(value as Record<string, unknown>).map(([k, v]) => [k, strictSchema(v)]))
+      : strictSchema(value);
+  }
+  if (out.type === "object") out.additionalProperties = false;
+  return out;
+}
+
+async function sendAnthropic(payload: Record<string, unknown>, apiKey: string): Promise<InvokeResult> {
   const url = ENV.llmApiUrl || API_URL;
   let response: Response | undefined;
   for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
@@ -129,10 +159,8 @@ async function invokeAnthropic(params: InvokeParams, apiKey: string): Promise<In
   }
 
   const data = (await response.json()) as AnthropicResponse;
-  const toolUse = data.content.find(block => block.type === "tool_use");
-  const content = toolUse
-    ? JSON.stringify(toolUse.input ?? {})
-    : data.content.filter(block => block.type === "text").map(block => block.text ?? "").join("");
+  if (data.stop_reason === "refusal") throw new Error("LLM refused the request");
+  const content = data.content.filter(block => block.type === "text").map(block => block.text ?? "").join("");
 
   return {
     id: data.id,
