@@ -1,5 +1,6 @@
 import { and, asc, desc, eq, like, or, sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
+import { searchTerms } from "./searchTerms";
 import { announcements, cartItems, emailLogs, InsertUser, notifications, orders, productsCache, pushSubscriptions, searchAnalytics, siteSettings, syncHistory, users } from "../drizzle/schema";
 import { ENV } from "./_core/env";
 
@@ -276,16 +277,20 @@ export async function getProducts(params: {
     conditions.push(sql`JSON_LENGTH(${productsCache.countries}) = 1`);
   }
   if (search) {
-    conditions.push(
-      or(
-        like(productsCache.name, `%${search}%`),
-        like(productsCache.networkName, `%${search}%`),
-        like(productsCache.productId, `%${search}%`),
-        // Search inside countries JSON array (e.g. [{"id":"JP","name":"Japan"}])
-        sql`JSON_SEARCH(LOWER(${productsCache.countries}), 'one', LOWER(${`%${search}%`}), NULL, '$[*].name') IS NOT NULL`,
-        sql`JSON_SEARCH(LOWER(${productsCache.countries}), 'one', LOWER(${`%${search}%`}), NULL, '$[*].id') IS NOT NULL`,
-      )
-    );
+    // Every word must match somewhere (name, network, id or a covered country),
+    // so "Singapore Malaysia Thailand" finds plans covering all three.
+    for (const term of searchTerms(search)) {
+      conditions.push(
+        or(
+          like(productsCache.name, `%${term}%`),
+          like(productsCache.networkName, `%${term}%`),
+          like(productsCache.productId, `%${term}%`),
+          // Search inside countries JSON array (e.g. [{"id":"JP","name":"Japan"}])
+          sql`JSON_SEARCH(LOWER(${productsCache.countries}), 'one', LOWER(${`%${term}%`}), NULL, '$[*].name') IS NOT NULL`,
+          sql`JSON_SEARCH(LOWER(${productsCache.countries}), 'one', LOWER(${`%${term}%`}), NULL, '$[*].id') IS NOT NULL`,
+        )
+      );
+    }
   }
   if (region && region !== "all") {
     // Map composite region names to their actual Vizlync region values

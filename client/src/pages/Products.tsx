@@ -255,7 +255,10 @@ export default function Products() {
   const [dataSize, setDataSize] = useState("all");
   const [duration, setDuration] = useState("all");
   const [topUpOnly, setTopUpOnly] = useState(params.get("topup") === "1");
-  const [sortBy, setSortBy] = useState<"price_asc" | "price_desc" | "validity" | "data">("price_asc");
+  const [sortBy, setSortBy] = useState<"price_asc" | "price_desc" | "validity" | "data">(() => {
+    const s = params.get("sort");
+    return s === "data" || s === "price_desc" || s === "validity" ? s : "price_asc";
+  });
   // Phones: filters stay folded behind one button so the plans are visible straight away
   const [showFilters, setShowFilters] = useState(false);
   const [page, setPage] = useState(0);

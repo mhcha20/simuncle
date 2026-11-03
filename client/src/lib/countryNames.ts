@@ -1164,7 +1164,7 @@ export function translateSearchQuery(query: string, lang: Language): string {
     else if (lang === "th") localName = entry.th;
     else localName = entry.en;
     if (localName && result.includes(localName)) {
-      result = result.replace(localName, entry.en);
+      result = result.replace(localName, ` ${entry.en} `);
     }
   }
 
@@ -1212,9 +1212,10 @@ export function translateSearchQuery(query: string, lang: Language): string {
 
   for (const [local, en] of keywordMap) {
     if (result.includes(local)) {
-      result = result.replace(local, en);
+      result = result.replace(local, ` ${en} `);
     }
   }
 
-  return result;
+  // Names typed together ("新加坡馬來西亞") become separate words
+  return result.replace(/\s+/g, " ").trim();
 }

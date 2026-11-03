@@ -1,4 +1,5 @@
 import { useParams, Link } from "wouter";
+import { BIG_DATA_MIN_GB, BIG_DATA_SUBTITLE, BIG_DATA_TITLE, pickBigDataPlans } from "@/lib/bigDataPlans";
 import { dataFromName, shortPlanName, unlimitedDailyFromName } from "@/lib/planName";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useCurrency } from "@/hooks/useCurrency";
@@ -627,6 +628,16 @@ export default function DestinationPage() {
     { enabled: !!config, staleTime: 60_000 }
   );
 
+  // Big data plans for this destination, shown above the cheapest-first list
+  const { data: bigDataData } = trpc.products.list.useQuery(
+    { region: config?.region, search: config?.searchQuery, minData: BIG_DATA_MIN_GB, sortBy: "data", limit: 24 },
+    { enabled: !!config, staleTime: 60_000 }
+  );
+  const bigDataPlans = useMemo(
+    () => pickBigDataPlans((bigDataData?.products ?? []) as Record<string, unknown>[], 3),
+    [bigDataData]
+  );
+
   const products = useMemo(() => {
     const fetched = (productsData?.products ?? []) as Record<string, unknown>[];
     // Country pages: plans for this country alone come before multi-country plans (order kept within each group)
@@ -854,6 +865,18 @@ export default function DestinationPage() {
             {langKey === "en" ? `${totalCount} plans` : langKey === "zh-CN" ? `${totalCount} 个方案` : langKey === "ja" ? `${totalCount} 件` : langKey === "ko" ? `${totalCount}개` : langKey === "th" ? `${totalCount} แผน` : `${totalCount} 個方案`}
           </div>
         </div>
+
+        {activeFilters === 0 && sortBy === "price_asc" && bigDataPlans.length > 0 && (
+          <div className="mb-8 rounded-2xl border border-orange-200 bg-orange-50/60 p-4 sm:p-5">
+            <h2 className="text-lg font-bold text-foreground">{BIG_DATA_TITLE[langKey] ?? BIG_DATA_TITLE.en}</h2>
+            <p className="text-sm text-muted-foreground mb-4">{BIG_DATA_SUBTITLE[langKey] ?? BIG_DATA_SUBTITLE.en}</p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {bigDataPlans.map((p) => (
+                <DestProductCard key={`big-${String(p.productId)}`} product={p} markupPct={markupPct} />
+              ))}
+            </div>
+          </div>
+        )}
 
         {isLoading ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">

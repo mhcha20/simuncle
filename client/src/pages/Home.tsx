@@ -1,4 +1,5 @@
 import { useLanguage } from "@/contexts/LanguageContext";
+import { BIG_DATA_MIN_GB, BIG_DATA_SUBTITLE, BIG_DATA_TITLE, pickBigDataPlans } from "@/lib/bigDataPlans";
 import { dataFromName, shortPlanName, unlimitedDailyFromName } from "@/lib/planName";
 import { trackSearch } from "@/lib/gtm";
 import { PageSEO } from "@/components/SEO";
@@ -520,6 +521,8 @@ export default function Home() {
   // One typical plan per popular destination (e.g. Japan 7 days 5 GB)
   const productsQuery = trpc.products.featured.useQuery(undefined, { staleTime: 5 * 60 * 1000 });
   const settingsQuery = trpc.settings.getAll.useQuery(undefined, { staleTime: 5 * 60 * 1000 });
+  const bigDataQuery = trpc.products.list.useQuery({ minData: BIG_DATA_MIN_GB, sortBy: "data", limit: 100 }, { staleTime: 5 * 60 * 1000 });
+  const bigDataPlans = pickBigDataPlans((bigDataQuery.data?.products ?? []) as Record<string, unknown>[], 4, { byRegion: true });
   const latestArticlesQuery = trpc.articles.list.useQuery({ limit: 3, offset: 0 }, { staleTime: 5 * 60 * 1000 });
   const markupPct = parseFloat(settingsQuery.data?.["markup_percentage"] ?? "0");
   const hkdRate = parseFloat(settingsQuery.data?.["hkd_rate"] ?? "7.8");
@@ -841,6 +844,33 @@ export default function Home() {
           )}
         </div>
       </section>
+
+      {/* Big data plans: otherwise buried, because lists open cheapest first */}
+      {bigDataPlans.length > 0 && (
+        <section className="py-16">
+          <div className="container">
+            <div className="flex items-end justify-between gap-4 mb-8">
+              <div>
+                <h2 className="text-2xl font-bold text-foreground">{BIG_DATA_TITLE[language] ?? BIG_DATA_TITLE.en}</h2>
+                <p className="text-sm text-muted-foreground mt-1">{BIG_DATA_SUBTITLE[language] ?? BIG_DATA_SUBTITLE.en}</p>
+              </div>
+              <Link href="/products?sort=data" className="text-primary text-sm font-medium hover:underline flex items-center gap-1 shrink-0">
+                {t.home.viewAll} <ChevronRight className="w-4 h-4" />
+              </Link>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-stretch">
+              {bigDataPlans.map((product) => (
+                <ProductCard
+                  key={String(product.productId)}
+                  product={product}
+                  markupPct={markupPct}
+                  hkdRate={hkdRate}
+                />
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* How it works + payment methods */}
       <HowItWorks language={language} />
