@@ -1,4 +1,5 @@
 import { useLanguage } from "@/contexts/LanguageContext";
+import { BIG_DATA_MIN_GB, BIG_DATA_SUBTITLE, BIG_DATA_TITLE, pickBigDataPlans } from "@/lib/bigDataPlans";
 import { dataFromName, shortPlanName, unlimitedDailyFromName } from "@/lib/planName";
 import { useCurrency } from "@/hooks/useCurrency";
 import { PageSEO } from "@/components/SEO";
@@ -331,6 +332,16 @@ export default function Products() {
     staleTime: 3 * 60 * 1000,
   });
 
+  // Big data plans for the same filters, shown above the cheapest-first list
+  const showBigData = page === 0 && sortBy === "price_asc" && dataSize === "all" && !topUpOnly;
+  const bigDataQuery = trpc.products.list.useQuery(
+    { ...queryInput, minData: BIG_DATA_MIN_GB, maxData: undefined, dailyOnly: undefined, offset: 0, limit: 60, sortBy: "data" as const },
+    { enabled: showBigData, staleTime: 3 * 60 * 1000 }
+  );
+  const bigDataPlans = showBigData
+    ? pickBigDataPlans((bigDataQuery.data?.products ?? []) as Record<string, unknown>[], 4, { byRegion: countries.length === 0 && region === "all" && !searchEn })
+    : [];
+
   const settingsQuery = trpc.settings.getAll.useQuery(undefined, { staleTime: 5 * 60 * 1000 });
   const markupPct = parseFloat(settingsQuery.data?.["markup_percentage"] ?? "0");
   const hkdRate = parseFloat(settingsQuery.data?.["hkd_rate"] ?? "7.8");
@@ -426,7 +437,7 @@ export default function Products() {
 
   const allProducts = productsQuery.data?.products ?? [];
   const products = allProducts.filter((p) => !/topup/i.test(String((p as Record<string, unknown>).name ?? "")));
-  const total = products.length;
+  const total = productsQuery.data?.total ?? products.length;
   const totalPages = Math.ceil((productsQuery.data?.total ?? 0) / LIMIT);
 
   // Quick country search
@@ -844,6 +855,35 @@ export default function Products() {
             </div>
           )}
         </div>
+
+        {/* Big data plans */}
+        {bigDataPlans.length > 0 && (
+          <div className="mb-8 rounded-2xl border border-orange-200 bg-orange-50/60 p-4 sm:p-5">
+            <div className="flex items-end justify-between gap-3 mb-4">
+              <div>
+                <h2 className="text-lg font-bold text-foreground">{BIG_DATA_TITLE[language] ?? BIG_DATA_TITLE.en}</h2>
+                <p className="text-sm text-muted-foreground">{BIG_DATA_SUBTITLE[language] ?? BIG_DATA_SUBTITLE.en}</p>
+              </div>
+              <button type="button" onClick={() => setSortBy("data")} className="text-primary text-sm font-medium hover:underline shrink-0">
+                {t.home.viewAll} →
+              </button>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 items-stretch">
+              {bigDataPlans.map((product, i) => (
+                <div key={`big-${String(product.productId)}`} className={i >= 2 ? "hidden sm:contents" : "contents"}>
+                  <ProductCard
+                    product={product}
+                    onAddToCart={handleAddToCart}
+                    onBuyNow={handleBuyNow}
+                    buyNowPending={false}
+                    markupPct={markupPct}
+                    hkdRate={hkdRate}
+                  />
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Results count */}
         {!productsQuery.isLoading && (
