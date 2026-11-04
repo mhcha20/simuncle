@@ -19,6 +19,7 @@ import { handleScheduledReconcile } from "../scheduledReconcile";
 import { handleScheduledPendingReminder } from "../scheduledPendingReminder";
 import { handleScheduledUpdateExchangeRates } from "../scheduledUpdateExchangeRates";
 import { handleScheduledSoroSync } from "../scheduledSoroSync";
+import { retranslateMissingArticle } from "../retranslateMissing";
 import { generateAndStoreSeoArticles } from "../generateSeoArticles";
 import { sdk } from "./sdk";
 import { handleSitemap } from "../sitemap";
@@ -159,6 +160,9 @@ async function startServer() {
   server.listen(port, () => {
     console.log(`Server running on http://localhost:${port}/`);
     startScheduler(port);
+    if (process.env.RETRANSLATE_MISSING === "1") {
+      void retranslateMissingArticle().catch(err => console.error("[Retranslate]", err));
+    }
   });
 }
 
