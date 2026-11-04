@@ -2,10 +2,18 @@
 // already uses - messages in, choices[0].message.content out - so callers don't care
 // which provider is behind it.
 //
-// Providers: "anthropic" (Messages API, default) or "openrouter" (OpenAI-compatible
-// chat completions; also works for any OpenAI-compatible endpoint via LLM_API_URL).
-// Config: LLM_API_KEY, LLM_MODEL, optional LLM_PROVIDER / LLM_API_URL.
-// A key starting with "sk-or-" is treated as OpenRouter without setting LLM_PROVIDER.
+// Providers:
+//   "anthropic"  Messages API (default when no Grok/OpenRouter key is set)
+//   "openrouter" OpenAI-compatible chat completions (also any endpoint via LLM_API_URL)
+//   "openai"     any OpenAI-compatible endpoint (set LLM_API_URL)
+//   "grok"       xAI chat completions (alias "xai"); https://api.x.ai/v1
+// Config: LLM_API_KEY, optional XAI_API_KEY / GROK_API_KEY, LLM_MODEL, LLM_PROVIDER, LLM_API_URL.
+// Auto-detect when LLM_PROVIDER is empty:
+//   sk-or- key            -> OpenRouter
+//   XAI_API_KEY / GROK_API_KEY, or an xai- LLM_API_KEY -> Grok
+//   otherwise             -> Anthropic
+// An explicit LLM_PROVIDER always wins, so an existing Anthropic/OpenRouter setup is unchanged
+// until you set the provider (or add a Grok key with the provider left empty).
 
 import { ENV } from "./env";
 
@@ -55,7 +63,9 @@ export type InvokeResult = {
 
 const DEFAULT_MODEL = "claude-sonnet-5-5";
 const DEFAULT_OPENROUTER_MODEL = "anthropic/claude-sonnet-4.5";
+const DEFAULT_GROK_MODEL = "grok-4.5";
 const OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions";
+const GROK_URL = "https://api.x.ai/v1/chat/completions";
 const DEFAULT_MAX_TOKENS = 8192;
 const API_URL = "https://api.anthropic.com/v1/messages";
 const MAX_RETRIES = 3;
@@ -175,8 +185,57 @@ async function sendAnthropic(payload: Record<string, unknown>, apiKey: string): 
   };
 }
 
-const isOpenRouter = (apiKey: string) =>
-  ENV.llmProvider === "openrouter" || (!ENV.llmProvider && apiKey.startsWith("sk-or-"));
+type OpenAIRoute = {
+  apiKey: string;
+  url: string;
+  defaultModel: string;
+  /** OpenRouter wants Referer / X-Title. xAI does not. */
+  openRouterHeaders: boolean;
+};
+
+/** Which backend invokeLLM should call, and with which key. */
+export function resolveLlmRoute(apiKey = ENV.llmApiKey): { kind: "anthropic"; apiKey: string } | ({ kind: "openai" } & OpenAIRoute) {
+  const provider = ENV.llmProvider;
+  const xaiKey = ENV.xaiApiKey;
+  if (provider === "grok" || provider === "xai") {
+    return {
+      kind: "openai",
+      apiKey: xaiKey || apiKey,
+      url: ENV.llmApiUrl || GROK_URL,
+      defaultModel: DEFAULT_GROK_MODEL,
+      openRouterHeaders: false,
+    };
+  }
+  if (provider === "openrouter" || (provider === "" && apiKey.startsWith("sk-or-") && !xaiKey)) {
+    return {
+      kind: "openai",
+      apiKey,
+      url: ENV.llmApiUrl || OPENROUTER_URL,
+      defaultModel: DEFAULT_OPENROUTER_MODEL,
+      openRouterHeaders: true,
+    };
+  }
+  if (provider === "openai") {
+    return {
+      kind: "openai",
+      apiKey,
+      url: ENV.llmApiUrl || OPENROUTER_URL,
+      defaultModel: DEFAULT_OPENROUTER_MODEL,
+      openRouterHeaders: true,
+    };
+  }
+  // No explicit provider: a Grok key turns Grok on. Leave LLM_PROVIDER=anthropic to keep Claude.
+  if (provider === "" && (xaiKey || apiKey.startsWith("xai-"))) {
+    return {
+      kind: "openai",
+      apiKey: xaiKey || apiKey,
+      url: ENV.llmApiUrl || GROK_URL,
+      defaultModel: DEFAULT_GROK_MODEL,
+      openRouterHeaders: false,
+    };
+  }
+  return { kind: "anthropic", apiKey };
+}
 
 type OpenAIChatResponse = {
   id: string;
@@ -189,7 +248,7 @@ type OpenAIChatResponse = {
   usage?: { prompt_tokens: number; completion_tokens: number; total_tokens: number };
 };
 
-async function invokeOpenAICompatible(params: InvokeParams, apiKey: string): Promise<InvokeResult> {
+async function invokeOpenAICompatible(params: InvokeParams, route: OpenAIRoute): Promise<InvokeResult> {
   const format = params.responseFormat ?? params.response_format;
   const schema =
     params.outputSchema ?? params.output_schema ?? (format?.type === "json_schema" ? format.json_schema : undefined);
@@ -200,7 +259,7 @@ async function invokeOpenAICompatible(params: InvokeParams, apiKey: string): Pro
   }
 
   const payload: Record<string, unknown> = {
-    model: params.model ?? ENV.llmModel ?? DEFAULT_OPENROUTER_MODEL,
+    model: params.model ?? ENV.llmModel ?? route.defaultModel,
     max_tokens: params.max_tokens ?? params.maxTokens ?? DEFAULT_MAX_TOKENS,
     messages,
   };
@@ -210,13 +269,15 @@ async function invokeOpenAICompatible(params: InvokeParams, apiKey: string): Pro
     payload.tool_choice = { type: "function", function: { name: schema.name } };
   }
 
-  const url = ENV.llmApiUrl || OPENROUTER_URL;
+  const url = route.url;
   const headers: Record<string, string> = {
     "content-type": "application/json",
-    authorization: `Bearer ${apiKey}`,
-    "X-Title": "SIM uncle",
+    authorization: `Bearer ${route.apiKey}`,
   };
-  if (ENV.publicUrl) headers["HTTP-Referer"] = ENV.publicUrl;
+  if (route.openRouterHeaders) {
+    headers["X-Title"] = "SIM uncle";
+    if (ENV.publicUrl) headers["HTTP-Referer"] = ENV.publicUrl;
+  }
 
   let response: Response | undefined;
   for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
@@ -255,8 +316,8 @@ async function invokeOpenAICompatible(params: InvokeParams, apiKey: string): Pro
 }
 
 export async function invokeLLM(params: InvokeParams): Promise<InvokeResult> {
-  const apiKey = ENV.llmApiKey;
-  if (!apiKey) throw new Error("LLM_API_KEY is not configured");
-  if (isOpenRouter(apiKey) || ENV.llmProvider === "openai") return invokeOpenAICompatible(params, apiKey);
-  return invokeAnthropic(params, apiKey);
+  const route = resolveLlmRoute();
+  if (!route.apiKey) throw new Error("LLM_API_KEY is not configured");
+  if (route.kind === "openai") return invokeOpenAICompatible(params, route);
+  return invokeAnthropic(params, route.apiKey);
 }

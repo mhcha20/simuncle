@@ -24,9 +24,12 @@ export const ENV = {
   ownerEmail: (process.env.OWNER_EMAIL ?? list(process.env.ADMIN_EMAILS)[0] ?? "").trim(),
   indexNowKey: process.env.INDEXNOW_KEY ?? "",
 
-  // LLM (Anthropic)
+  // LLM. Anthropic by default. A Grok key (XAI_API_KEY / GROK_API_KEY, or an xai- LLM_API_KEY)
+  // switches translations, SEO articles and support chat to the xAI API unless LLM_PROVIDER
+  // is explicitly anthropic, openrouter, or openai.
   llmApiKey: process.env.LLM_API_KEY ?? process.env.ANTHROPIC_API_KEY ?? "",
-  /** "anthropic" (default) | "openrouter" | "openai" (any OpenAI-compatible endpoint, set LLM_API_URL). Keys starting sk-or- are treated as OpenRouter. */
+  xaiApiKey: process.env.XAI_API_KEY || process.env.GROK_API_KEY || "",
+  /** "anthropic" | "openrouter" | "openai" | "grok" (alias "xai"). Empty = auto (see llm.ts). */
   llmProvider: (process.env.LLM_PROVIDER ?? "").toLowerCase(),
   llmModel: process.env.LLM_MODEL || undefined,
   llmApiUrl: process.env.LLM_API_URL ?? "",

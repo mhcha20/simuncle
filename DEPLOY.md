@@ -8,7 +8,7 @@
 | 圖片／檔案 | Manus Storage | Cloudflare R2（或任何 S3 相容儲存） |
 | 資料庫 | Manus 託管 TiDB | Railway MySQL |
 | 排程 | Manus Heartbeat | 伺服器內建排程（`server/scheduler.ts`，13 個工作） |
-| AI（翻譯、SEO 文章、客服） | Manus LLM | Anthropic API 或 OpenRouter（`LLM_API_KEY`；`sk-or-` 開頭自動用 OpenRouter，`LLM_MODEL` 填 `vendor/model`） |
+| AI（翻譯、SEO 文章、客服） | Manus LLM | Anthropic、OpenRouter，或者 Grok（設 `XAI_API_KEY` 就會用 Grok，模型預設 `grok-4.5`；想繼續用 Claude 就設 `LLM_PROVIDER=anthropic`） |
 | 站主通知 | Manus 通知 | Resend 寄 email 去 `OWNER_EMAIL` |
 
 舊會員用**同一個 email** 登入（Google 或電郵連結都得），就會自動對返佢原本嘅帳戶、訂單、購物車、推薦碼同管理員權限。`ADMIN_EMAILS` 入面嘅 email 一定係管理員。
@@ -80,7 +80,9 @@
 
 ## 5. 環境變數
 
-參考 `.env.example`，喺 Railway → Variables 逐個加。沿用舊嘅（唔好重新生成）：Stripe、Vizlync、TGT、Resend、SE Ranking、Soro、IndexNow、VAPID。新增：`PUBLIC_URL`、`JWT_SECRET`、`GOOGLE_*`、`ADMIN_EMAILS`、`OWNER_EMAIL`、`S3_*`、`LLM_API_KEY`。
+參考 `.env.example`，喺 Railway → Variables 逐個加。沿用舊嘅（唔好重新生成）：Stripe、Vizlync、TGT、Resend、SE Ranking、Soro、IndexNow、VAPID。新增：`PUBLIC_URL`、`JWT_SECRET`、`GOOGLE_*`、`ADMIN_EMAILS`、`OWNER_EMAIL`、`S3_*`、`LLM_API_KEY`（或者 Grok 嘅 `XAI_API_KEY`）。
+
+- 用 Grok：喺 [console.x.ai](https://console.x.ai) 開 API key，Railway 加 `XAI_API_KEY`。`LLM_PROVIDER` 留空就會改用 Grok（預設模型 `grok-4.5`，想換就設 `LLM_MODEL`）。如果同時有 Anthropic key 又想保留 Claude，設 `LLM_PROVIDER=anthropic`。改完環境變數要 Redeploy。
 
 - `STRIPE_SECRET_KEY` 正式環境**必須用 live key**。對帳會跳過 test／live 唔同模式嘅 session，用錯 key 舊訂單會全部被跳過。
 - `VITE_*` 變數係 **build 時**寫入前台，要喺第一次 build 前設好，改咗要 Redeploy。
