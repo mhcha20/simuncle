@@ -14,6 +14,8 @@
 //   otherwise             -> Anthropic
 // An explicit LLM_PROVIDER always wins, so an existing Anthropic/OpenRouter setup is unchanged
 // until you set the provider (or add a Grok key with the provider left empty).
+// ANTHROPIC_API_KEY comes before all of that: when it is set, Claude is tried first, and the
+// route above is used only when Claude can't do the job (no credit, bad key, rate limit, outage).
 
 import { ENV } from "./env";
 
@@ -315,8 +317,32 @@ async function invokeOpenAICompatible(params: InvokeParams, route: OpenAIRoute):
   };
 }
 
+/** Claude can't serve the call (no credit, bad key, rate limit, outage, network): try the backup. */
+function claudeUnavailable(error: unknown): boolean {
+  const message = error instanceof Error ? error.message : String(error);
+  if (/credit balance|purchase credits|insufficient\s+(?:\w+\s+){0,3}credits?/i.test(message)) return true;
+  const status = Number(/LLM invoke failed: (\d{3})/.exec(message)?.[1] ?? 0);
+  if (!status) return !/refused/i.test(message); // fetch itself failed
+  return status === 401 || status === 403 || status === 429 || status === 529 || status >= 500;
+}
+
+/** A Grok/OpenRouter model name in LLM_MODEL means nothing to the Anthropic API. */
+function claudeModel(model: string | undefined): string {
+  if (model && /^claude-/.test(model)) return model;
+  return ENV.llmModel && /^claude-/.test(ENV.llmModel) ? ENV.llmModel : DEFAULT_MODEL;
+}
+
 export async function invokeLLM(params: InvokeParams): Promise<InvokeResult> {
   const route = resolveLlmRoute();
+  const claudeKey = ENV.anthropicApiKey;
+  if (claudeKey && !(route.kind === "anthropic" && route.apiKey === claudeKey)) {
+    try {
+      return await invokeAnthropic({ ...params, model: claudeModel(params.model) }, claudeKey);
+    } catch (error) {
+      if (!route.apiKey || !claudeUnavailable(error)) throw error;
+      console.warn(`[LLM] Claude unavailable, using the backup: ${(error instanceof Error ? error.message : String(error)).slice(0, 200)}`);
+    }
+  }
   if (!route.apiKey) throw new Error("LLM_API_KEY is not configured");
   if (route.kind === "openai") return invokeOpenAICompatible(params, route);
   return invokeAnthropic(params, route.apiKey);

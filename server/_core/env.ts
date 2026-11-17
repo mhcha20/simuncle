@@ -28,6 +28,8 @@ export const ENV = {
   // switches translations, SEO articles and support chat to the xAI API unless LLM_PROVIDER
   // is explicitly anthropic, openrouter, or openai.
   llmApiKey: process.env.LLM_API_KEY ?? process.env.ANTHROPIC_API_KEY ?? "",
+  /** When set, Claude is tried first for every LLM call; the LLM_* route above is the backup. */
+  anthropicApiKey: process.env.ANTHROPIC_API_KEY ?? "",
   xaiApiKey: process.env.XAI_API_KEY || process.env.GROK_API_KEY || "",
   /** "anthropic" | "openrouter" | "openai" | "grok" (alias "xai"). Empty = auto (see llm.ts). */
   llmProvider: (process.env.LLM_PROVIDER ?? "").toLowerCase(),

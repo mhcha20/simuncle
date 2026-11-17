@@ -19,7 +19,7 @@ React 19＋Vite＋Tailwind 4、Express＋tRPC 11、Drizzle＋MySQL、Stripe、Re
 - **部署 branch：`main`**。網址 https://simuncle.com （＋www），Railway 網址 simuncle-production.up.railway.app（port 8080）。
 - `railway.json`：build `pnpm install --frozen-lockfile && pnpm build`，pre-deploy `node dist/db-setup.js`（自動 migration），start `pnpm start`，healthcheck `/sitemap.xml`，**只可 1 個 replica**（排程同 TGT token cache 喺單一 process）。
 - 排程：`SCHEDULER_JOBS` 揀開邊啲工作（改呢個 variable 會重新部署）。
-- AI：`LLM_PROVIDER`／`LLM_MODEL`／`LLM_API_KEY`；有 `XAI_API_KEY` 就用 Grok（2026-11-04 起）；`LLM_PROVIDER=anthropic` 可轉返 Claude。
+- AI：有 `ANTHROPIC_API_KEY` 就 **Claude 先**（2026-11-17 起，模型 `LLM_MODEL` 係 claude- 先用，否則 `claude-sonnet-5-5`）；Claude 用唔到（冇餘額、key 錯、429、5xx）先轉 `LLM_PROVIDER`／`LLM_MODEL`／`LLM_API_KEY`／`XAI_API_KEY` 嗰條路（有 `XAI_API_KEY` 就 Grok）。
 - Variables（只記名稱）：`DATABASE_URL`、`JWT_SECRET`、`PUBLIC_URL`、`OWNER_EMAIL`、`ADMIN_EMAILS`、`GOOGLE_CLIENT_ID／SECRET`、`STRIPE_SECRET_KEY`、`STRIPE_WEBHOOK_SECRET`、`RESEND_API_KEY`、`S3_*`（R2）、`TGT_ACCOUNT_ID`、`TGT_SECRET`、`TGT_API_BASE_URL`、`VIZLYNC_API_KEY`、`VIZLYNC_PARTNER_ID`、`SORO_*`、`SE_RANKING_*`、`INDEXNOW_KEY`、`VAPID_*`、`VITE_VAPID_PUBLIC_KEY`、`LLM_*`、`XAI_API_KEY`、`SCHEDULER_JOBS`、`ORDER_ID_FLOOR`、`RETRANSLATE_MISSING`。
 - TGT／Vizlync 有 **IP 白名單**（Railway Static Outbound IP），換 service／region 會斷供應商連線。
 

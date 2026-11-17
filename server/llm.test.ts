@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 const envState = vi.hoisted(() => ({
   llmApiKey: "test-key",
+  anthropicApiKey: "",
   xaiApiKey: "",
   llmProvider: "",
   llmModel: undefined as string | undefined,
@@ -19,7 +20,7 @@ const ok = (body: unknown) => new Response(JSON.stringify(body), { status: 200 }
 
 afterEach(() => {
   vi.restoreAllMocks();
-  Object.assign(envState, { llmApiKey: "test-key", xaiApiKey: "", llmProvider: "", llmModel: undefined, llmApiUrl: "" });
+  Object.assign(envState, { llmApiKey: "test-key", anthropicApiKey: "", xaiApiKey: "", llmProvider: "", llmModel: undefined, llmApiUrl: "" });
 });
 
 describe("invokeLLM (Anthropic)", () => {
@@ -185,5 +186,47 @@ describe("invokeLLM (Grok / xAI)", () => {
     expect(body.model).toBe("grok-4.7");
     expect(body.tool_choice).toEqual({ type: "function", function: { name: "cat" } });
     expect(((fetchMock.mock.calls[0][1] as RequestInit).headers as Record<string, string>).authorization).toBe("Bearer xai-from-llm");
+  });
+});
+
+describe("invokeLLM (ANTHROPIC_API_KEY first)", () => {
+  const claudeOk = () => ok({ id: "c", model: "claude", content: [{ type: "text", text: "from claude" }], stop_reason: "end_turn" });
+  const grokOk = () => ok({ id: "g", model: "grok-4.7", choices: [{ finish_reason: "stop", message: { content: "from grok" } }] });
+
+  it("tries Claude before a Grok setup, ignoring a Grok LLM_MODEL", async () => {
+    Object.assign(envState, { anthropicApiKey: "sk-ant-new", llmApiKey: "xai-old", llmProvider: "grok", xaiApiKey: "xai-live", llmModel: "grok-4.7" });
+    const fetchMock = vi.spyOn(globalThis, "fetch").mockResolvedValue(claudeOk());
+    const res = await invokeLLM({ messages: [{ role: "user", content: "x" }] });
+    expect(res.choices[0].message.content).toBe("from claude");
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    const [url, init] = fetchMock.mock.calls[0];
+    expect(url).toBe("https://api.anthropic.com/v1/messages");
+    expect(((init as RequestInit).headers as Record<string, string>)["x-api-key"]).toBe("sk-ant-new");
+    expect(JSON.parse((init as RequestInit).body as string).model).toMatch(/^claude-/);
+  });
+
+  it("falls back to Grok when Claude has no credit", async () => {
+    Object.assign(envState, { anthropicApiKey: "sk-ant-new", llmApiKey: "xai-old", llmProvider: "grok", xaiApiKey: "xai-live" });
+    vi.spyOn(console, "warn").mockImplementation(() => {});
+    const fetchMock = vi.spyOn(globalThis, "fetch")
+      .mockResolvedValueOnce(new Response(JSON.stringify({ type: "error", error: { message: "Your credit balance is too low to access the Anthropic API." } }), { status: 400 }))
+      .mockResolvedValueOnce(grokOk());
+    const res = await invokeLLM({ messages: [{ role: "user", content: "x" }] });
+    expect(res.choices[0].message.content).toBe("from grok");
+    expect(fetchMock.mock.calls[1][0]).toBe("https://api.x.ai/v1/chat/completions");
+  });
+
+  it("does not hide a real request error behind the backup", async () => {
+    Object.assign(envState, { anthropicApiKey: "sk-ant-new", llmApiKey: "xai-old", llmProvider: "grok" });
+    const fetchMock = vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response("bad messages", { status: 400 }));
+    await expect(invokeLLM({ messages: [{ role: "user", content: "x" }] })).rejects.toThrow(/400/);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("calls Claude once when the LLM_* route already is that Anthropic key", async () => {
+    Object.assign(envState, { anthropicApiKey: "sk-ant-same", llmApiKey: "sk-ant-same", llmProvider: "anthropic" });
+    const fetchMock = vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response("down", { status: 401 }));
+    await expect(invokeLLM({ messages: [{ role: "user", content: "x" }] })).rejects.toThrow(/401/);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 });
